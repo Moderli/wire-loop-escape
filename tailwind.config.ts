@@ -52,6 +52,16 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// Game-specific colors
+				wire: {
+					primary: 'hsl(var(--wire-primary))',
+					secondary: 'hsl(var(--wire-secondary))'
+				},
+				loop: 'hsl(var(--loop-color))',
+				collision: 'hsl(var(--collision-flash))',
+				game: {
+					background: 'hsl(var(--game-background))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
