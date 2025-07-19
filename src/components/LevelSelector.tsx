@@ -1,6 +1,18 @@
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Lock, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LevelData } from '@/lib/types';
+
+// Dynamically import all levels to get their data, especially their names
+const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
+const allLevels: LevelData[] = Object.values(levelModules).map((module: any) => {
+  // Assuming the exported object key follows the pattern 'levelX'
+  const key = Object.keys(module).find(k => k.startsWith('level'));
+  return key ? module[key] : null;
+}).filter(Boolean);
+
+// Sort levels by ID
+allLevels.sort((a, b) => a.id - b.id);
 
 interface LevelSelectorProps {
   onLevelSelect: (level: number) => void;
@@ -9,21 +21,28 @@ interface LevelSelectorProps {
 }
 
 export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSelectorProps) => {
-  const levels = Array.from({ length: 12 }, (_, i) => i + 1);
-  const unlockedLevels = Math.min(currentLevel + 1, 12); // Allow next level
+  const totalLevels = allLevels.length;
+  const levels = Array.from({ length: totalLevels }, (_, i) => i + 1);
+  const unlockedLevels = Math.min(currentLevel + 1, totalLevels);
 
   const getDifficulty = (level: number) => {
-    if (level <= 3) return 'Easy';
-    if (level <= 6) return 'Medium';
-    if (level <= 9) return 'Hard';
-    return 'Expert';
+    const difficulty = allLevels.find(l => l.id === level)?.difficulty || 'easy';
+    return difficulty.charAt(0).toUpperCase() + difficulty.slice(1);
   };
 
   const getDifficultyColor = (level: number) => {
-    if (level <= 3) return 'text-green-400';
-    if (level <= 6) return 'text-yellow-400';
-    if (level <= 9) return 'text-orange-400';
-    return 'text-red-400';
+    const difficulty = allLevels.find(l => l.id === level)?.difficulty;
+    switch (difficulty) {
+      case 'easy': return 'text-green-400';
+      case 'medium': return 'text-yellow-400';
+      case 'hard': return 'text-orange-400';
+      case 'expert': return 'text-red-400';
+      default: return 'text-gray-400';
+    }
+  };
+
+  const getLevelName = (level: number) => {
+    return allLevels.find(l => l.id === level)?.name || `Level ${level}`;
   };
 
   const getStars = (level: number) => {
@@ -108,12 +127,9 @@ export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSele
 
               {/* Level Preview */}
               {isUnlocked && (
-                <div className="h-20 border rounded bg-game-background flex items-center justify-center">
-                  <div className="text-xs text-muted-foreground">
-                    {level <= 3 && "Simple curves"}
-                    {level > 3 && level <= 6 && "Moving wires"}
-                    {level > 6 && level <= 9 && "Complex paths"}
-                    {level > 9 && "Extreme challenge"}
+                <div className="h-20 border rounded bg-game-background flex items-center justify-center p-2">
+                  <div className="text-xs text-muted-foreground text-center">
+                    {getLevelName(level)}
                   </div>
                 </div>
               )}

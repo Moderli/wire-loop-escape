@@ -1,10 +1,22 @@
 import Phaser from 'phaser';
 import { LevelData, WirePoint } from '@/lib/types';
-import { level1 } from '@/levels/level1';
-import { level2 } from '@/levels/level2';
-import { level3 } from '@/levels/level3';
-import { level4 } from '@/levels/level4';
-import { level5 } from '@/levels/level5';
+
+// Dynamically import all levels from the levels folder
+const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
+const allLevels = new Map<number, LevelData>();
+
+for (const path in levelModules) {
+  const match = path.match(/level(\d+)\.ts$/);
+  if (match) {
+    const levelNumber = parseInt(match[1], 10);
+    const module = levelModules[path] as { [key: string]: LevelData };
+    // The exported object is named after the level, e.g., `export const level1 = ...`
+    const levelData = module[`level${levelNumber}`];
+    if (levelData) {
+      allLevels.set(levelNumber, levelData);
+    }
+  }
+}
 
 // Add Catmull-Rom spline interpolation OUTSIDE the class
 function catmullRomSpline(points: WirePoint[], numSegments = 16) {
@@ -251,20 +263,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private getLevelData(levelNumber: number): LevelData | null {
-    switch (levelNumber) {
-      case 1:
-        return level1;
-      case 2:
-        return level2;
-      case 3:
-        return level3;
-      case 4:
-        return level4;
-      case 5:
-        return level5;
-      default:
-        return null;
-    }
+    return allLevels.get(levelNumber) || null;
   }
 
   private drawWirePath() {
