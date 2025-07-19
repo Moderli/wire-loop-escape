@@ -36,10 +36,10 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: 1000,
+      height: 750,
       parent: gameRef.current,
-      backgroundColor: '#0a0a1a',
+      backgroundColor: '#0f0f25ff',
       physics: {
         default: 'arcade',
         arcade: {

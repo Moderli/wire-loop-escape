@@ -476,3 +476,13 @@ export class GameScene extends Phaser.Scene {
     }
   }
 }
+
+const config: Phaser.Types.Core.GameConfig = {
+  type: Phaser.AUTO,
+  width: 1000, // new width
+  height: 1700, // new height
+  scene: GameScene,
+  // ...existing config...
+};
+
+const game = new Phaser.Game(config);
