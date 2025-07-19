@@ -81,17 +81,29 @@ export class GameScene extends Phaser.Scene {
   private elapsedFollowTime: number = 0;
   private blurOverlay!: Phaser.GameObjects.Graphics;
   private lastTapTime: number = 0;
+  private startLabel!: Phaser.GameObjects.Text;
+  private endLabel!: Phaser.GameObjects.Text;
 
   constructor() {
     super({ key: 'GameScene' });
   }
 
+  /*
+  preload() {
+    // Load sound effects from a CDN
+    this.load.audio('start', 'https://cdn.pixabay.com/download/audio/2022/03/09/audio_3c70425e4f.mp3');
+    this.load.audio('win', 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_74c6439a88.mp3');
+    this.load.audio('loss', 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_c3328224b7.mp3');
+    this.load.audio('click', 'https://cdn.pixabay.com/download/audio/2022/03/10/audio_c483739a1f.mp3');
+  }
+  */
+
   create() {
     // eslint-disable-next-line no-console
     console.log('GameScene create() called');
-    
-    // Create game background
-    this.add.rectangle(0, 0, this.scale.width * 5, this.scale.height * 5, 0x0a0a1a);
+
+    // Create a blurred, animated starfield background
+    this.createStarfield();
 
     // Listen for game events
     this.game.events.on('startLevel', this.startLevel, this);
@@ -113,6 +125,12 @@ export class GameScene extends Phaser.Scene {
     // eslint-disable-next-line no-console
     console.log('Test rectangle drawn at 350,250');
 
+    // Create labels for start and end points BEFORE loading level
+    this.startLabel = this.add.text(0, 0, 'START', { fontSize: '24px', color: '#00ff00', fontStyle: 'bold', align: 'center' }).setOrigin(0.5).setDepth(100);
+    this.endLabel = this.add.text(0, 0, 'END', { fontSize: '24px', color: '#ff0000', fontStyle: 'bold', align: 'center' }).setOrigin(0.5).setDepth(100);
+    this.startLabel.setVisible(false);
+    this.endLabel.setVisible(false);
+
     // Start with level 1
     this.loadLevel(1);
     // eslint-disable-next-line no-console
@@ -122,17 +140,34 @@ export class GameScene extends Phaser.Scene {
       this.mousePos.x = pointer.x;
       this.mousePos.y = pointer.y;
     });
+
+    // A single, consolidated input handler
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (this.gameState === 'preGame' && pointer.rightButtonDown() && this.isOnWire(this.mousePos.x, this.mousePos.y)) {
+      if (this.gameState !== 'preGame') {
+        return;
+      }
+
+      const isRightClick = pointer.rightButtonDown();
+      let isDoubleTap = false;
+
+      if (pointer.wasTouch) {
+        const now = this.time.now;
+        if (now - this.lastTapTime < 300) {
+          isDoubleTap = true;
+        }
+        this.lastTapTime = now;
+      }
+
+      // Start the game ONLY if the interaction is on the start point
+      if ((isRightClick || isDoubleTap) && this.isOnStartPoint(pointer.x, pointer.y)) {
+        // this.sound.play('start', { volume: 0.5 });
         this.gameState = 'following';
         this.gameStarted = true;
+        this.followStartTime = this.time.now;
+        this.progressIndex = 0;
       }
     });
-    this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
-      if (this.gameState === 'following' && !pointer.rightButtonDown()) {
-        this.triggerLoss();
-      }
-    });
+
     this.gameState = 'preGame';
     this.magnifier = this.add.graphics();
     this.events.on('postupdate', this.drawMagnifier, this);
@@ -143,6 +178,7 @@ export class GameScene extends Phaser.Scene {
     if (this.reportBox) this.reportBox.destroy();
     if (this.retryButton) this.retryButton.destroy();
     if (this.nextButton) this.nextButton.destroy();
+
     this.reportBox = this.add.graphics().setDepth(101);
     this.retryButton = this.add.text(400, 260, '', { fontSize: '28px', color: '#fff', backgroundColor: '#222', padding: { left: 16, right: 16, top: 8, bottom: 8 } }).setOrigin(0.5).setDepth(102).setInteractive();
     this.nextButton = this.add.text(400, 320, '', { fontSize: '28px', color: '#fff', backgroundColor: '#222', padding: { left: 16, right: 16, top: 8, bottom: 8 } }).setOrigin(0.5).setDepth(102).setInteractive();
@@ -154,24 +190,6 @@ export class GameScene extends Phaser.Scene {
     if (this.blurOverlay) this.blurOverlay.destroy();
     this.blurOverlay = this.add.graphics().setDepth(99);
     this.blurOverlay.setVisible(false);
-    
-    // Add right-click and double-tap event listeners
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.rightButtonDown()) {
-        this.handleGameStart();
-      }
-    });
-    
-    // Handle double-tap for touch devices
-    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-      if (pointer.wasTouch) {
-        const now = this.time.now;
-        if (now - (this.lastTapTime || 0) < 300) { // Double tap within 300ms
-          this.handleGameStart();
-        }
-        this.lastTapTime = now;
-      }
-    });
   }
 
   private setupInput() {
@@ -198,9 +216,9 @@ export class GameScene extends Phaser.Scene {
 
   private getLevelData(levelNumber: number): LevelData {
     // Project 3D spiral points to 2D (x, y) with better scaling and centering
-    const scale = 2.8; // Make the model even bigger
-    const centerX = 400;
-    const centerY = 300;
+    const scale = 2; // Make the model even bigger
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
     const project = (pt: { x: number; y: number; z: number }) => ({
       x: centerX + pt.x * scale,
       y: centerY + pt.y * scale
@@ -288,16 +306,69 @@ export class GameScene extends Phaser.Scene {
     }
     this.wirePath.strokePath();
     // Draw start and end points
+    const startPoint = this.wirePoints[0];
     this.wirePath.fillStyle(0x00ff00, 1);
-    this.wirePath.fillCircle(this.wirePoints[0].x, this.wirePoints[0].y, 10);
+    this.wirePath.fillCircle(startPoint.x, startPoint.y, 15); // Increased size
+    this.startLabel.setPosition(startPoint.x, startPoint.y - 40).setVisible(true);
+
     const endPoint = this.wirePoints[this.wirePoints.length - 1];
     this.wirePath.fillStyle(0xff0000, 1);
-    this.wirePath.fillCircle(endPoint.x, endPoint.y, 10);
+    this.wirePath.fillCircle(endPoint.x, endPoint.y, 15); // Increased size
+    this.endLabel.setPosition(endPoint.x, endPoint.y - 40).setVisible(true);
+  }
+
+  private createStarfield() {
+    // A simple texture for the stars
+    const graphics = this.add.graphics();
+    graphics.fillStyle(0xffffff);
+    graphics.fillCircle(1, 1, 1);
+    graphics.generateTexture('star', 2, 2);
+    graphics.destroy();
+
+    // The particle emitter for the stars
+    const particles = this.add.particles(0, 0, 'star', {
+      speed: { min: 20, max: 100 },
+      angle: { min: 0, max: 360 },
+      scale: { min: 0.2, max: 1 },
+      alpha: { min: 0.5, max: 1 },
+      lifespan: 3000,
+      frequency: 100,
+      blendMode: 'ADD',
+      emitZone: {
+        source: new Phaser.Geom.Rectangle(0, 0, this.scale.width, this.scale.height),
+        type: 'random',
+        quantity: 1
+      }
+    });
+
+    // Create a new camera for the background
+    const bgCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+    bgCamera.setScroll(0, 0);
+
+    // Apply a blur effect to the background camera
+    if (this.renderer.type === Phaser.WEBGL) {
+      const blur = (this.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines.getPostPipeline('Blur');
+      if (blur) {
+        // @ts-ignore - Phaser's type definitions can be incomplete for pipeline properties
+        blur.strength = 0.8; // Set blur strength directly
+        bgCamera.setPostPipeline(blur);
+      }
+    }
+
+    // Main camera should ignore the background elements
+    this.cameras.main.ignore(particles);
+    // Background camera should only see the background elements
+    bgCamera.ignore(this.children.list.filter(child => child !== particles));
   }
 
   private startLevel(levelNumber: number) {
     // eslint-disable-next-line no-console
     console.log('startLevel called with level:', levelNumber);
+    
+    // Hide old labels before loading new level
+    if (this.startLabel) this.startLabel.setVisible(false);
+    if (this.endLabel) this.endLabel.setVisible(false);
+
     this.loadLevel(levelNumber);
     this.gameStats = {
       time: 0,
@@ -328,6 +399,13 @@ export class GameScene extends Phaser.Scene {
     this.game.events.emit('statsUpdate', { ...this.gameStats });
   }
 
+  private isOnStartPoint(x: number, y: number): boolean {
+    if (this.wirePoints.length === 0) return false;
+    const startPoint = this.wirePoints[0];
+    const distance = Phaser.Math.Distance.Between(x, y, startPoint.x, startPoint.y);
+    return distance < 25; // Increased clickable radius
+  }
+
   private isOnWire(x: number, y: number): boolean {
     const smoothPoints = catmullRomSpline(this.wirePoints, 12);
     for (let i = 0; i < smoothPoints.length; i++) {
@@ -340,6 +418,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private triggerLoss() {
+    // this.sound.play('loss', { volume: 0.4 });
     this.gameState = 'lost';
     this.gameStarted = false;
     this.win = false;
@@ -349,6 +428,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private triggerWin() {
+    // this.sound.play('win', { volume: 0.6 });
     this.gameState = 'preGame';
     this.gameStarted = false;
     this.win = true;
@@ -361,41 +441,48 @@ export class GameScene extends Phaser.Scene {
     // Blur overlay
     this.blurOverlay.clear();
     this.blurOverlay.fillStyle(0x181c23, 0.7);
-    this.blurOverlay.fillRect(0, 0, 800, 600);
+    this.blurOverlay.fillRect(0, 0, this.scale.width, this.scale.height);
     this.blurOverlay.setVisible(true);
     // Draw a full screen overlay box
     this.reportBox.clear();
     this.reportBox.fillStyle(0x181c23, 0.95);
-    this.reportBox.fillRoundedRect(0, 0, 800, 600, 0);
+    this.reportBox.fillRoundedRect(0, 0, this.scale.width, this.scale.height, 0);
     this.reportBox.lineStyle(4, win ? 0x00ff88 : 0xff6666, 1);
-    this.reportBox.strokeRoundedRect(0, 0, 800, 600, 0);
+    this.reportBox.strokeRoundedRect(0, 0, this.scale.width, this.scale.height, 0);
     this.reportBox.setVisible(true);
     // Title
-    this.reportText.setText(msg).setFontSize(40).setPosition(400, 300 - 60).setColor(win ? '#00ff88' : '#ff6666').setVisible(true);
+    this.reportText.setText(msg).setFontSize(40).setPosition(this.scale.width / 2, this.scale.height / 2 - 60).setColor(win ? '#00ff88' : '#ff6666').setVisible(true).setOrigin(0.5);
     // Stats
     const stats = `Level: ${this.gameStats.level}\nTime: ${this.elapsedFollowTime.toFixed(1)}s`;
     if (this.reportStatsText) this.reportStatsText.destroy();
-    this.reportStatsText = this.add.text(400, 300, stats, { fontSize: '24px', color: '#fff', align: 'center' }).setOrigin(0.5).setDepth(102);
+    this.reportStatsText = this.add.text(this.scale.width / 2, this.scale.height / 2, stats, { fontSize: '24px', color: '#fff', align: 'center' }).setOrigin(0.5).setDepth(102);
     // Retry button
-    this.retryButton.setText('Retry').setVisible(true).setY(300 + 50);
+    this.retryButton.setText('Retry').setVisible(true).setPosition(this.scale.width / 2, this.scale.height / 2 + 60);
     this.retryButton.removeAllListeners();
     this.retryButton.on('pointerdown', () => {
+      // this.sound.play('click', { volume: 0.7 });
       this.blurOverlay.setVisible(false);
       this.reportBox.setVisible(false);
       this.reportText.setVisible(false);
       this.reportStatsText.setVisible(false);
       this.retryButton.setVisible(false);
       this.nextButton.setVisible(false);
+      
+      // Reset game state and progress
       this.progressIndex = 0;
       this.gameState = 'preGame';
       this.followStartTime = 0;
       this.elapsedFollowTime = 0;
+
+      // Redraw the wire to erase the green progress color
+      this.drawWirePath();
     });
     // Next Level button (only if win)
     if (win) {
-      this.nextButton.setText('Next Level').setVisible(true).setY(300 + 100);
+      this.nextButton.setText('Next Level').setVisible(true).setPosition(this.scale.width / 2, this.scale.height / 2 + 120);
       this.nextButton.removeAllListeners();
       this.nextButton.on('pointerdown', () => {
+        // this.sound.play('click', { volume: 0.7 });
         this.blurOverlay.setVisible(false);
         this.reportBox.setVisible(false);
         this.reportText.setVisible(false);
@@ -435,14 +522,28 @@ export class GameScene extends Phaser.Scene {
   }
 
   update() {
+    this.mousePos.x = this.input.mousePointer.x;
+    this.mousePos.y = this.input.mousePointer.y;
+
     if (this.gameState === 'preGame') {
       this.drawMagnifier();
       return;
     }
+
     if (this.gameState === 'following') {
+      const pointer = this.input.activePointer;
+      const isLosing = !this.isOnWire(pointer.x, pointer.y) || 
+                       !(pointer.rightButtonDown() || (pointer.isDown && pointer.wasTouch));
+
+      if (isLosing) {
+        this.triggerLoss();
+        return;
+      }
+
       if (this.followStartTime === 0) {
         this.followStartTime = this.time.now;
       }
+
       const smoothPoints = catmullRomSpline(this.wirePoints, 12);
       let minDist = Infinity;
       let closestPoint = 0;
@@ -458,20 +559,14 @@ export class GameScene extends Phaser.Scene {
           closestPoint = i;
         }
       }
-      // Check if mouse is close to wire and right button is held
-      if (minDist > 15 || !this.input.mousePointer.rightButtonDown()) {
-        this.triggerLoss();
-        return;
+
+      if (closestPoint > this.progressIndex) {
+        this.progressIndex = closestPoint;
+        this.drawWirePath();
       }
-              // Update progress
-        if (closestPoint > this.progressIndex) {
-          this.progressIndex = closestPoint;
-          this.drawWirePath(); // Redraw with progress coloring
-        }
-      // Check win condition
+
       if (this.progressIndex >= smoothPoints.length - 1) {
         this.triggerWin();
-        return;
       }
     }
     if (this.gameState === 'lost' || this.win) {

@@ -34,12 +34,18 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
   useEffect(() => {
     if (!gameRef.current) return;
 
+    const gameContainer = gameRef.current;
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+    gameContainer.addEventListener('contextmenu', handleContextMenu);
+
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
-      width: 800,
-      height: 600,
+      width: window.innerWidth,
+      height: window.innerHeight,
       parent: gameRef.current,
-      backgroundColor: '#0a0a1a',
+      backgroundColor: '#181c23',
       physics: {
         default: 'arcade',
         arcade: {
@@ -49,15 +55,15 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
       },
       scene: GameScene, // Start with GameScene only
       scale: {
-        mode: Phaser.Scale.FIT,
+        mode: Phaser.Scale.RESIZE,
         autoCenter: Phaser.Scale.CENTER_BOTH,
         min: {
           width: 400,
           height: 300
         },
         max: {
-          width: 1200,
-          height: 900
+          width: 12000,
+          height: 9000
         }
       }
     };
@@ -89,6 +95,7 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
 
     return () => {
       game.destroy(true);
+      gameContainer.removeEventListener('contextmenu', handleContextMenu);
     };
   }, []);
 
@@ -128,10 +135,11 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
       <div 
         ref={gameRef} 
         style={{
-          width: 800,
-          height: 600,
-          margin: 'auto',
-          position: 'relative'
+          width: '100%',
+          height: '100%',
+          position: 'absolute',
+          top: 0,
+          left: 0
         }}
       />
 
