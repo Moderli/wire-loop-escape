@@ -1,16 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { getMetrics } from '@/lib/metrics';
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
 
 export default function Index() {
   const [nickname, setNickname] = useState('');
+  const [metrics, setMetrics] = useState({ visitors: 0, timeSpent: 0 });
   const navigate = useNavigate();
 
-  const handlePlay = () => {
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      const data = await getMetrics();
+      setMetrics(data);
+    };
+    fetchMetrics();
+  }, []);
+
+  const handlePlay = async () => {
     if (nickname.trim()) {
+      await fetch('/api/metrics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nickname: nickname.trim() }),
+      });
       navigate('/game', { state: { nickname } });
     }
   };
@@ -64,7 +79,8 @@ export default function Index() {
 
       {/* Bottom center: privacy/contact */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300">
-        privacy &ndash; contact
+        <p>Total Visitors: {metrics.visitors}</p>
+        <p>Total Time Spent: {Math.floor(metrics.timeSpent / 60)} minutes</p>
       </div>
     </div>
   );
