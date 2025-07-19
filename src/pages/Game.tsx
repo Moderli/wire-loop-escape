@@ -2,7 +2,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { WireLoopGame } from '@/components/WireLoopGame';
 
-export default function Game() {
+interface GameProps {
+  currentLevel: number;
+  setCurrentLevel: (level: number) => void;
+}
+
+export default function Game({ currentLevel, setCurrentLevel }: GameProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const nickname = location.state?.nickname || '';
@@ -16,5 +21,5 @@ export default function Game() {
 
   if (!nickname) return null;
 
-  return <WireLoopGame nickname={nickname} />;
+  return <WireLoopGame nickname={nickname} currentLevel={currentLevel} setCurrentLevel={setCurrentLevel} />;
 } 

@@ -17,13 +17,14 @@ interface GameStats {
 
 interface WireLoopGameProps {
   nickname: string;
+  currentLevel: number;
+  setCurrentLevel: (level: number) => void;
 }
 
-export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
+export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLoopGameProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'levelSelect' | 'gameOver'>('playing');
-  const [currentLevel, setCurrentLevel] = useState(1);
   const [gameStats, setGameStats] = useState<GameStats>({
     time: 0,
     collisions: 0,
@@ -113,8 +114,8 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
     });
 
     // Start the first level immediately
-    game.events.emit('startLevel', 1);
-    setCurrentLevel(1);
+    game.events.emit('startLevel', currentLevel);
+    setCurrentLevel(currentLevel);
 
     return () => {
       game.destroy(true);
