@@ -1,23 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { getMetrics } from '@/lib/metrics';
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
 
 export default function Index() {
   const [nickname, setNickname] = useState('');
-  const [metrics, setMetrics] = useState({ visitors: 0, timeSpent: 0 });
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      const data = await getMetrics();
-      setMetrics(data);
-    };
-    fetchMetrics();
-  }, []);
 
   const handlePlay = () => {
     if (nickname.trim()) {
@@ -74,8 +64,7 @@ export default function Index() {
 
       {/* Bottom center: privacy/contact */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300">
-        <p>Total Visitors: {metrics.visitors}</p>
-        <p>Total Time Spent: {Math.floor(metrics.timeSpent / 60)} minutes</p>
+        privacy &ndash; contact
       </div>
     </div>
   );

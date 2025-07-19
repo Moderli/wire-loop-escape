@@ -6,49 +6,24 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Game from "./pages/Game";
-import { useEffect } from 'react';
-import { trackVisit, startTimeTracking, updateTimeSpent } from '@/lib/metrics';
 
 const queryClient = new QueryClient();
 
-const App = () => {
-  useEffect(() => {
-    trackVisit();
-    startTimeTracking();
-
-    const handleBeforeUnload = () => {
-      updateTimeSpent();
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    const interval = setInterval(() => {
-      updateTimeSpent();
-      startTimeTracking();
-    }, 60000); // every minute
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      clearInterval(interval);
-    };
-  }, []);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/game" element={<Game />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  );
-};
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/game" element={<Game />} />
+          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
 
 export default App;
