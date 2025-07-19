@@ -80,6 +80,7 @@ export class GameScene extends Phaser.Scene {
   private followStartTime: number = 0;
   private elapsedFollowTime: number = 0;
   private blurOverlay!: Phaser.GameObjects.Graphics;
+  private lastTapTime: number = 0;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -90,7 +91,7 @@ export class GameScene extends Phaser.Scene {
     console.log('GameScene create() called');
     
     // Create game background
-    this.add.rectangle(0, 0, this.scale.width * 2, this.scale.height * 2, 0x0a0a1a);
+    this.add.rectangle(0, 0, this.scale.width * 5, this.scale.height * 5, 0x0a0a1a);
 
     // Listen for game events
     this.game.events.on('startLevel', this.startLevel, this);
@@ -153,6 +154,24 @@ export class GameScene extends Phaser.Scene {
     if (this.blurOverlay) this.blurOverlay.destroy();
     this.blurOverlay = this.add.graphics().setDepth(99);
     this.blurOverlay.setVisible(false);
+    
+    // Add right-click and double-tap event listeners
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.rightButtonDown()) {
+        this.handleGameStart();
+      }
+    });
+    
+    // Handle double-tap for touch devices
+    this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.wasTouch) {
+        const now = this.time.now;
+        if (now - (this.lastTapTime || 0) < 300) { // Double tap within 300ms
+          this.handleGameStart();
+        }
+        this.lastTapTime = now;
+      }
+    });
   }
 
   private setupInput() {
@@ -406,6 +425,15 @@ export class GameScene extends Phaser.Scene {
     this.magnifier.strokeCircle(this.mousePos.x, this.mousePos.y, 16);
   }
 
+  private handleGameStart() {
+    if (this.gameState === 'preGame' && !this.gameStarted) {
+      this.gameStarted = true;
+      this.gameState = 'following';
+      this.followStartTime = 0;
+      this.elapsedFollowTime = 0;
+    }
+  }
+
   update() {
     if (this.gameState === 'preGame') {
       this.drawMagnifier();
@@ -417,29 +445,33 @@ export class GameScene extends Phaser.Scene {
       }
       const smoothPoints = catmullRomSpline(this.wirePoints, 12);
       let minDist = Infinity;
-      let closestIdx = 0;
+      let closestPoint = 0;
       for (let i = 0; i < smoothPoints.length; i++) {
-        const dx = smoothPoints[i].x - this.mousePos.x;
-        const dy = smoothPoints[i].y - this.mousePos.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
+        const dist = Phaser.Math.Distance.Between(
+          this.input.mousePointer.x,
+          this.input.mousePointer.y,
+          smoothPoints[i].x,
+          smoothPoints[i].y
+        );
         if (dist < minDist) {
           minDist = dist;
-          closestIdx = i;
+          closestPoint = i;
         }
       }
-      if (closestIdx > this.progressIndex) {
-        this.progressIndex = closestIdx;
+      // Check if mouse is close to wire and right button is held
+      if (minDist > 15 || !this.input.mousePointer.rightButtonDown()) {
+        this.triggerLoss();
+        return;
       }
-      // Win condition: reached end
+              // Update progress
+        if (closestPoint > this.progressIndex) {
+          this.progressIndex = closestPoint;
+          this.drawWirePath(); // Redraw with progress coloring
+        }
+      // Check win condition
       if (this.progressIndex >= smoothPoints.length - 1) {
         this.triggerWin();
         return;
-      }
-      if (minDist > 12) {
-        this.triggerLoss();
-      }
-      if (!this.input.activePointer.rightButtonDown()) {
-        this.triggerLoss();
       }
     }
     if (this.gameState === 'lost' || this.win) {
