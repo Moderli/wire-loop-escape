@@ -1,13 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { getMetrics } from '@/lib/metrics';
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
 
 export default function Index() {
   const [nickname, setNickname] = useState('');
+  const [metrics, setMetrics] = useState({ visitors: 0, timeSpent: 0 });
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setMetrics(getMetrics());
+  }, []);
 
   const handlePlay = () => {
     if (nickname.trim()) {
@@ -38,9 +44,11 @@ export default function Index() {
       {/* Main content */}
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-6 rounded-xl">
         <h1 className={cn('text-7xl font-bold mb-2 drop-shadow-lg', gradientText)}>
-          slither.io
+          WireLoop
         </h1>
-        <p className="text-purple-300 text-lg mb-8 mt-2">Eat to grow longer!</p>
+        <p className="text-muted-foreground">
+          Play fair, play safe.
+        </p>
         <div className="w-full flex flex-col items-center space-y-6">
           <input
             className="w-full max-w-sm px-6 py-3 rounded-full bg-[#3a3350] text-lg text-purple-200 placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg mb-2"
@@ -58,27 +66,12 @@ export default function Index() {
             Play
           </button>
         </div>
-      </div>
-
-      {/* Bottom left: Change Skin */}
-      <div className="absolute bottom-4 left-4 flex items-center space-x-2 z-10">
-        <div className="w-10 h-10 bg-gradient-to-tr from-purple-400 to-purple-700 rounded-full flex items-center justify-center">
-          <span className="text-2xl">🐍</span>
-        </div>
-        <span className="text-green-400 font-semibold cursor-pointer hover:underline">Change Skin</span>
-      </div>
-
-      {/* Bottom right: Choose Server */}
-      <div className="absolute bottom-4 right-4 flex items-center space-x-2 z-10">
-        <div className="w-10 h-10 bg-gradient-to-tr from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-          <span className="text-2xl">🌍</span>
-        </div>
-        <span className="text-green-400 font-semibold cursor-pointer hover:underline">Choose Server</span>
-      </div>
+      </div> 
 
       {/* Bottom center: privacy/contact */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300">
-        privacy &ndash; contact
+        <p>Total Visitors: {metrics.visitors}</p>
+        <p>Total Time Spent: {Math.floor(metrics.timeSpent / 60)} minutes</p>
       </div>
     </div>
   );
