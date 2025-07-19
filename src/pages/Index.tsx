@@ -12,7 +12,11 @@ export default function Index() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    setMetrics(getMetrics());
+    const fetchMetrics = async () => {
+      const data = await getMetrics();
+      setMetrics(data);
+    };
+    fetchMetrics();
   }, []);
 
   const handlePlay = () => {

@@ -7,7 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Game from "./pages/Game";
 import { useEffect } from 'react';
-import { trackVisit, startTimeTracking, getTimeSpent } from '@/lib/metrics';
+import { trackVisit, startTimeTracking, updateTimeSpent } from '@/lib/metrics';
 
 const queryClient = new QueryClient();
 
@@ -17,13 +17,19 @@ const App = () => {
     startTimeTracking();
 
     const handleBeforeUnload = () => {
-      getTimeSpent();
+      updateTimeSpent();
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
+    const interval = setInterval(() => {
+      updateTimeSpent();
+      startTimeTracking();
+    }, 60000); // every minute
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearInterval(interval);
     };
   }, []);
 

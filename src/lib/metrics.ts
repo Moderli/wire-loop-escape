@@ -1,34 +1,34 @@
-export const trackVisit = (): { isNew: boolean; count: number } => {
-  let visits = parseInt(localStorage.getItem('visitor_count') || '0', 10);
-  const isNewVisitor = !localStorage.getItem('has_visited');
-
-  if (isNewVisitor) {
-    visits += 1;
-    localStorage.setItem('visitor_count', visits.toString());
-    localStorage.setItem('has_visited', 'true');
+export const trackVisit = async (): Promise<{ visitors: number; timeSpent: number }> => {
+  const response = await fetch('/api/metrics');
+  if (!response.ok) {
+    console.error('Failed to track visit');
+    return { visitors: 0, timeSpent: 0 };
   }
-
-  return { isNew: isNewVisitor, count: visits };
+  return response.json();
 };
 
 export const startTimeTracking = () => {
-  const startTime = Date.now();
-  sessionStorage.setItem('session_start_time', startTime.toString());
+  sessionStorage.setItem('session_start_time', Date.now().toString());
 };
 
-export const getTimeSpent = (): number => {
+export const updateTimeSpent = async () => {
   const startTime = parseInt(sessionStorage.getItem('session_start_time') || Date.now().toString(), 10);
-  const totalSeconds = Math.floor((Date.now() - startTime) / 1000);
-  
-  let accumulatedTime = parseInt(localStorage.getItem('total_time_spent') || '0', 10);
-  accumulatedTime += totalSeconds;
-  localStorage.setItem('total_time_spent', accumulatedTime.toString());
+  const timeSpent = Math.floor((Date.now() - startTime) / 1000);
 
-  return accumulatedTime;
+  if (timeSpent > 0) {
+    await fetch('/api/metrics', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timeSpent }),
+    });
+  }
 };
 
-export const getMetrics = (): { visitors: number; timeSpent: number } => {
-  const visitors = parseInt(localStorage.getItem('visitor_count') || '0', 10);
-  const timeSpent = parseInt(localStorage.getItem('total_time_spent') || '0', 10);
-  return { visitors, timeSpent };
+export const getMetrics = async (): Promise<{ visitors: number; timeSpent: number }> => {
+  const response = await fetch('/api/metrics');
+  if (!response.ok) {
+    console.error('Failed to get metrics');
+    return { visitors: 0, timeSpent: 0 };
+  }
+  return response.json();
 }; 
