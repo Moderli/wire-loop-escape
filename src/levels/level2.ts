@@ -1,10 +1,21 @@
-// Spiral wire loop for level 2 (2 curves, 20 points)
-export const wireLoop = Array.from({ length: 20 }, (_, i) => {
-  const t = (i / 19) * Math.PI * 4; // 0 to 4π (2 full spirals)
-  const r = 100 + 20 * Math.sin(t);
-  return {
-    x: Math.cos(t) * r,
-    y: Math.sin(t) * r,
-    z: 30 * Math.sin(t * 1.5),
-  };
-}); 
+import { LevelData } from '@/lib/types';
+
+// More complex 3D spiral data
+const spiralPoints = [
+  { x: -120, y: 0, z: -60 },
+  { x: -100, y: 30, z: -50 },
+  { x: -70, y: 60, z: -35 },
+  { x: -30, y: 80, z: -15 },
+  { x: 20, y: 60, z: 10 },
+  { x: 60, y: 30, z: 30 },
+  { x: 90, y: -20, z: 45 },
+  { x: 110, y: -50, z: 55 },
+  { x: 120, y: -80, z: 60 }
+];
+
+export const level2: LevelData = {
+  id: 2,
+  name: 'Twisted Path',
+  difficulty: 'medium',
+  wirePath: spiralPoints,
+}; 

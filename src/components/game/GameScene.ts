@@ -1,21 +1,10 @@
 import Phaser from 'phaser';
-import { wireLoop as wireLoop1 } from '@/levels/level1';
-import { wireLoop as wireLoop2 } from '@/levels/level2';
-import { wireLoop as wireLoop3 } from '@/levels/level3';
-
-interface WirePoint {
-  x: number;
-  y: number;
-}
-
-interface LevelData {
-  id: number;
-  name: string;
-  wirePath: WirePoint[];
-  difficulty: 'easy' | 'medium' | 'hard' | 'expert';
-  timeLimit?: number;
-  movingWires?: boolean;
-}
+import { LevelData, WirePoint } from '@/lib/types';
+import { level1 } from '@/levels/level1';
+import { level2 } from '@/levels/level2';
+import { level3 } from '@/levels/level3';
+import { level4 } from '@/levels/level4';
+import { level5 } from '@/levels/level5';
 
 // Add Catmull-Rom spline interpolation OUTSIDE the class
 function catmullRomSpline(points: WirePoint[], numSegments = 16) {
@@ -58,7 +47,7 @@ export class GameScene extends Phaser.Scene {
     level: 1,
     score: 0
   };
-  private currentLevel: LevelData | null = null;
+  private currentLevelData: LevelData | null = null;
   private gameStarted = false;
   private collisionCooldown = false;
   private loopConstraint: Phaser.GameObjects.Graphics | null = null;
@@ -69,7 +58,7 @@ export class GameScene extends Phaser.Scene {
   private following: boolean = false;
   private lost: boolean = false;
   // State machine: 'preGame' | 'following' | 'lost'
-  private gameState: 'preGame' | 'following' | 'lost' = 'preGame';
+  private gameState: 'preGame' | 'following' | 'warning' | 'lost' = 'preGame';
   private progressIndex: number = 0;
   private reportText!: Phaser.GameObjects.Text;
   private win: boolean = false;
@@ -83,6 +72,8 @@ export class GameScene extends Phaser.Scene {
   private lastTapTime: number = 0;
   private startLabel!: Phaser.GameObjects.Text;
   private endLabel!: Phaser.GameObjects.Text;
+  private warningOverlay!: Phaser.GameObjects.Rectangle;
+  private warningStartTime: number = 0;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -101,6 +92,12 @@ export class GameScene extends Phaser.Scene {
   create() {
     // eslint-disable-next-line no-console
     console.log('GameScene create() called');
+
+    // Add the warning overlay, initially invisible
+    this.warningOverlay = this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0xff0000)
+      .setOrigin(0)
+      .setDepth(1) // Just above the background
+      .setAlpha(0);
 
     // Create a blurred, animated starfield background
     this.createStarfield();
@@ -205,50 +202,42 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadLevel(levelNumber: number) {
-    this.currentLevel = this.getLevelData(levelNumber);
+    this.currentLevelData = this.getLevelData(levelNumber);
+    if (!this.currentLevelData) {
+      console.error(`Level ${levelNumber} not found!`);
+      // Fallback to level 1 or show an error
+      this.currentLevelData = this.getLevelData(1);
+    }
+
     this.gameStats.level = levelNumber;
-    this.wirePoints = [...this.currentLevel.wirePath];
-    // Debug log
-    // eslint-disable-next-line no-console
-    console.log('loadLevel', levelNumber, 'wirePoints:', this.wirePoints);
+    
+    // Project the 3D points from the level data to 2D screen coordinates
+    const scale = 2;
+    const centerX = this.scale.width / 2;
+    const centerY = this.scale.height / 2;
+    this.wirePoints = this.currentLevelData.wirePath.map(p => ({
+      x: centerX + (p.x || 0) * scale,
+      y: centerY + (p.y || 0) * scale,
+    }));
+
     this.drawWirePath();
   }
 
-  private getLevelData(levelNumber: number): LevelData {
-    // Project 3D spiral points to 2D (x, y) with better scaling and centering
-    const scale = 2; // Make the model even bigger
-    const centerX = this.scale.width / 2;
-    const centerY = this.scale.height / 2;
-    const project = (pt: { x: number; y: number; z: number }) => ({
-      x: centerX + pt.x * scale,
-      y: centerY + pt.y * scale
-    });
-    const levels: LevelData[] = [
-      {
-        id: 1,
-        name: 'Spiral 1',
-        difficulty: 'easy',
-        wirePath: wireLoop1.map(project)
-      },
-      {
-        id: 2,
-        name: 'Spiral 2',
-        difficulty: 'medium',
-        wirePath: wireLoop2.map(project)
-      },
-      {
-        id: 3,
-        name: 'Spiral 3',
-        difficulty: 'hard',
-        wirePath: wireLoop3.map(project)
-      }
-    ];
-    // Debug log
-    if (levels[levelNumber - 1]) {
-      // eslint-disable-next-line no-console
-      console.log('Level', levelNumber, 'wirePath:', levels[levelNumber - 1].wirePath);
+  private getLevelData(levelNumber: number): LevelData | null {
+    switch (levelNumber) {
+      case 1:
+        return level1;
+      case 2:
+        return level2;
+      case 3:
+        return level3;
+      case 4:
+        return level4;
+      case 5:
+        return level5;
+      default:
+        return null;
     }
-    return levels[levelNumber - 1] || levels[0];
   }
 
   private drawWirePath() {
@@ -357,8 +346,9 @@ export class GameScene extends Phaser.Scene {
 
     // Main camera should ignore the background elements
     this.cameras.main.ignore(particles);
-    // Background camera should only see the background elements
+    // Background camera should only see the background elements and not the warning tint
     bgCamera.ignore(this.children.list.filter(child => child !== particles));
+    bgCamera.ignore(this.warningOverlay);
   }
 
   private startLevel(levelNumber: number) {
@@ -406,6 +396,7 @@ export class GameScene extends Phaser.Scene {
     return distance < 25; // Increased clickable radius
   }
 
+  /* No longer needed, logic is now in update()
   private isOnWire(x: number, y: number): boolean {
     const smoothPoints = catmullRomSpline(this.wirePoints, 12);
     for (let i = 0; i < smoothPoints.length; i++) {
@@ -416,6 +407,7 @@ export class GameScene extends Phaser.Scene {
     }
     return false;
   }
+  */
 
   private triggerLoss() {
     // this.sound.play('loss', { volume: 0.4 });
@@ -423,6 +415,10 @@ export class GameScene extends Phaser.Scene {
     this.gameStarted = false;
     this.win = false;
     this.elapsedFollowTime = (this.time.now - this.followStartTime) / 1000;
+    
+    // Ensure warning overlay is hidden
+    this.warningOverlay.setAlpha(0);
+    
     this.showReport('You Lost!', false);
     // Wait for retry button
   }
@@ -530,13 +526,39 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    if (this.gameState === 'following') {
-      const pointer = this.input.activePointer;
-      const isLosing = !this.isOnWire(pointer.x, pointer.y) || 
-                       !(pointer.rightButtonDown() || (pointer.isDown && pointer.wasTouch));
+    const pointer = this.input.activePointer;
+    const isHolding = pointer.rightButtonDown() || (pointer.isDown && pointer.wasTouch);
+    const smoothPoints = catmullRomSpline(this.wirePoints, 12);
 
-      if (isLosing) {
-        this.triggerLoss();
+    let minDist = Infinity;
+    let closestPoint = 0;
+    for (let i = 0; i < smoothPoints.length; i++) {
+        const dist = Phaser.Math.Distance.Between(
+            pointer.x,
+            pointer.y,
+            smoothPoints[i].x,
+            smoothPoints[i].y
+        );
+        if (dist < minDist) {
+            minDist = dist;
+            closestPoint = i;
+        }
+    }
+
+    const isOffTrack = minDist > 15;
+    // This setting prevents the player from skipping large sections of the wire.
+    const maxProgressJump = 30; // Tunable: how many points ahead the player can be.
+    const isSkipping = closestPoint > this.progressIndex + maxProgressJump;
+
+    if (this.gameState === 'following') {
+      if (!isHolding || isOffTrack || isSkipping) {
+        this.gameState = 'warning';
+        this.warningStartTime = this.time.now;
+        this.tweens.add({
+            targets: this.warningOverlay,
+            alpha: 0.4,
+            duration: 200,
+        });
         return;
       }
 
@@ -544,22 +566,7 @@ export class GameScene extends Phaser.Scene {
         this.followStartTime = this.time.now;
       }
 
-      const smoothPoints = catmullRomSpline(this.wirePoints, 12);
-      let minDist = Infinity;
-      let closestPoint = 0;
-      for (let i = 0; i < smoothPoints.length; i++) {
-        const dist = Phaser.Math.Distance.Between(
-          this.input.mousePointer.x,
-          this.input.mousePointer.y,
-          smoothPoints[i].x,
-          smoothPoints[i].y
-        );
-        if (dist < minDist) {
-          minDist = dist;
-          closestPoint = i;
-        }
-      }
-
+      // Update progress, it's valid if we are here
       if (closestPoint > this.progressIndex) {
         this.progressIndex = closestPoint;
         this.drawWirePath();
@@ -567,6 +574,21 @@ export class GameScene extends Phaser.Scene {
 
       if (this.progressIndex >= smoothPoints.length - 1) {
         this.triggerWin();
+      }
+    }
+
+    if (this.gameState === 'warning') {
+      if (isHolding && !isOffTrack && !isSkipping) {
+        // Player recovered
+        this.gameState = 'following';
+        this.tweens.add({
+            targets: this.warningOverlay,
+            alpha: 0,
+            duration: 200,
+        });
+      } else if (this.time.now - this.warningStartTime > 500 || !isHolding) {
+        // Timer ran out or player released click/touch
+        this.triggerLoss();
       }
     }
     if (this.gameState === 'lost' || this.win) {
