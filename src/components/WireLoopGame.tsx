@@ -160,21 +160,21 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
           <GameHUD stats={gameStats} />
           
           {/* Game Controls */}
-          <div className="absolute top-4 right-4 flex space-x-2">
+          <div className="absolute bottom-4 right-4 md:top-4 md:right-4 flex space-x-2">
             <Button
               onClick={resetLevel}
               variant="outline"
-              size="sm"
+              size="lg"
               className="glow-primary"
             >
-              <RotateCcw className="w-4 h-4" />
+              <RotateCcw className="w-6 h-6" />
             </Button>
             <Button
               onClick={goToMenu}
               variant="outline"
-              size="sm"
+              size="lg"
             >
-              <Home className="w-4 h-4" />
+              <Home className="w-6 h-6" />
             </Button>
           </div>
         </>

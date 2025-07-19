@@ -31,7 +31,7 @@ export default function Index() {
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#181c23] text-white overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#181c23] text-white overflow-hidden p-4">
       {/* Top left social buttons (placeholders) */}
       <div className="absolute top-4 left-4 flex space-x-2 z-10">
         <button className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded shadow">Like</button>
@@ -40,7 +40,7 @@ export default function Index() {
       </div>
 
       {/* Top right graphics quality (placeholder) */}
-      <div className="absolute top-4 right-4 flex flex-col items-end z-10">
+      <div className="absolute top-4 right-4 hidden md:flex flex-col items-end z-10">
         <div className="flex items-center space-x-2">
           <span className="text-xs text-purple-300">Graphics:</span>
           <span className="text-green-400 font-bold text-sm">High quality</span>
@@ -52,13 +52,13 @@ export default function Index() {
 
       {/* Main content */}
       <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-6 rounded-xl">
-        <h1 className={cn('text-7xl font-bold mb-2 drop-shadow-lg', gradientText)}>
+        <h1 className={cn('text-5xl md:text-7xl font-bold mb-2 drop-shadow-lg', gradientText)}>
           WireLoop
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-center md:text-left">
           Play fair, play safe.
         </p>
-        <div className="w-full flex flex-col items-center space-y-6">
+        <div className="w-full flex flex-col items-center space-y-4 md:space-y-6 mt-4">
           <input
             className="w-full max-w-sm px-6 py-3 rounded-full bg-[#3a3350] text-lg text-purple-200 placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg mb-2"
             placeholder="Nickname"
@@ -67,7 +67,7 @@ export default function Index() {
             maxLength={20}
           />
           <button
-            className="w-32 py-3 rounded-full bg-gradient-to-b from-green-400 to-green-700 text-white text-2xl font-bold shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-green-400"
+            className="w-32 py-3 rounded-full bg-gradient-to-b from-green-400 to-green-700 text-white text-xl md:text-2xl font-bold shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-green-400"
             onClick={handlePlay}
             disabled={!nickname.trim()}
             style={{ boxShadow: '0 4px 24px 0 #1a3a2a55' }}
@@ -78,7 +78,7 @@ export default function Index() {
       </div> 
 
       {/* Bottom center: privacy/contact */}
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300">
+      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300 text-center">
         <p>Total Visitors: {metrics.visitors}</p>
         <p>Total Time Spent: {Math.floor(metrics.timeSpent / 60)} minutes</p>
       </div>

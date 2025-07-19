@@ -149,24 +149,19 @@ export class GameScene extends Phaser.Scene {
         return;
       }
 
-      const isRightClick = pointer.rightButtonDown();
-      let isDoubleTap = false;
-
-      if (pointer.wasTouch) {
-        const now = this.time.now;
-        if (now - this.lastTapTime < 300) {
-          isDoubleTap = true;
-        }
-        this.lastTapTime = now;
-      }
-
       // Start the game ONLY if the interaction is on the start point
-      if ((isRightClick || isDoubleTap) && this.isOnStartPoint(pointer.x, pointer.y)) {
+      if (this.isOnStartPoint(pointer.x, pointer.y)) {
         // this.sound.play('start', { volume: 0.5 });
         this.gameState = 'following';
         this.gameStarted = true;
         this.followStartTime = this.time.now;
         this.progressIndex = 0;
+      }
+    });
+
+    this.input.on('pointerup', () => {
+      if (this.gameState === 'following') {
+        this.triggerLoss();
       }
     });
 
@@ -210,19 +205,46 @@ export class GameScene extends Phaser.Scene {
     this.currentLevelData = this.getLevelData(levelNumber);
     if (!this.currentLevelData) {
       console.error(`Level ${levelNumber} not found!`);
-      // Fallback to level 1 or show an error
       this.currentLevelData = this.getLevelData(1);
     }
 
     this.gameStats.level = levelNumber;
-    
-    // Project the 3D points from the level data to 2D screen coordinates
-    const scale = 2;
+
+    // Calculate the bounding box of the original wire path
+    const rawPoints = this.currentLevelData.wirePath;
+    if (rawPoints.length === 0) return;
+
+    let minX = rawPoints[0].x, maxX = rawPoints[0].x;
+    let minY = rawPoints[0].y, maxY = rawPoints[0].y;
+
+    for (let i = 1; i < rawPoints.length; i++) {
+        minX = Math.min(minX, rawPoints[i].x);
+        maxX = Math.max(maxX, rawPoints[i].x);
+        minY = Math.min(minY, rawPoints[i].y);
+        maxY = Math.max(maxY, rawPoints[i].y);
+    }
+
+    const pathWidth = maxX - minX;
+    const pathHeight = maxY - minY;
+
+    // Determine the optimal scale to fit the path on the screen
+    const padding = 100; // px
+    const availableWidth = this.scale.width - padding * 2;
+    const availableHeight = this.scale.height - padding * 2;
+
+    const scaleX = availableWidth / pathWidth;
+    const scaleY = availableHeight / pathHeight;
+    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of the available space
+
+    // Project and scale the points
     const centerX = this.scale.width / 2;
     const centerY = this.scale.height / 2;
+    const pathCenterX = minX + pathWidth / 2;
+    const pathCenterY = minY + pathHeight / 2;
+
     this.wirePoints = this.currentLevelData.wirePath.map(p => ({
-      x: centerX + (p.x || 0) * scale,
-      y: centerY + (p.y || 0) * scale,
+      x: centerX + (p.x - pathCenterX) * scale,
+      y: centerY + (p.y - pathCenterY) * scale,
     }));
 
     this.drawWirePath();
@@ -532,7 +554,7 @@ export class GameScene extends Phaser.Scene {
     }
 
     const pointer = this.input.activePointer;
-    const isHolding = pointer.rightButtonDown() || (pointer.isDown && pointer.wasTouch);
+    const isHolding = pointer.isDown;
     const smoothPoints = catmullRomSpline(this.wirePoints, 12);
 
     let minDist = Infinity;
@@ -556,7 +578,13 @@ export class GameScene extends Phaser.Scene {
     const isSkipping = closestPoint > this.progressIndex + maxProgressJump;
 
     if (this.gameState === 'following') {
-      if (!isHolding || isOffTrack || isSkipping) {
+      if (!isHolding) {
+        // This is a backup check, pointerup event should handle it.
+        this.triggerLoss();
+        return;
+      }
+      
+      if (isOffTrack || isSkipping) {
         this.gameState = 'warning';
         this.warningStartTime = this.time.now;
         this.tweens.add({

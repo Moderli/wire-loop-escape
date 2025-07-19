@@ -38,25 +38,25 @@ export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSele
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-8">
+    <div className="w-full max-w-4xl mx-auto p-4 md:p-6">
+      <div className="flex items-center justify-between mb-6 md:mb-8">
         <Button 
           onClick={onBack}
           variant="outline"
           className="flex items-center space-x-2"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <span className="text-sm md:text-base">Back</span>
         </Button>
         
-        <h2 className="text-3xl font-bold text-primary text-glow">
+        <h2 className="text-2xl md:text-3xl font-bold text-primary text-glow">
           Select Level
         </h2>
         
         <div /> {/* Spacer */}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4">
         {levels.map((level) => {
           const isUnlocked = level <= unlockedLevels;
           const isCompleted = level < currentLevel;
@@ -66,7 +66,7 @@ export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSele
             <div
               key={level}
               className={cn(
-                "relative p-6 rounded-lg border-2 transition-all duration-200",
+                "relative p-4 md:p-6 rounded-lg border-2 transition-all duration-200",
                 isUnlocked 
                   ? "bg-card border-primary/50 hover:border-primary hover:glow-primary cursor-pointer" 
                   : "bg-muted/50 border-muted cursor-not-allowed opacity-50"
@@ -76,7 +76,7 @@ export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSele
               {/* Level Number */}
               <div className="text-center mb-4">
                 <div className={cn(
-                  "text-2xl font-bold mb-2",
+                  "text-xl md:text-2xl font-bold mb-2",
                   isUnlocked ? "text-primary" : "text-muted-foreground"
                 )}>
                   {isUnlocked ? level : <Lock className="w-6 h-6 mx-auto" />}
@@ -122,7 +122,7 @@ export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSele
         })}
       </div>
 
-      <div className="mt-8 text-center text-sm text-muted-foreground">
+      <div className="mt-6 md:mt-8 text-center text-sm text-muted-foreground">
         Complete levels to unlock new challenges. Earn stars based on your performance!
       </div>
     </div>
