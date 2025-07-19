@@ -14,10 +14,14 @@ interface GameStats {
   score: number;
 }
 
-export const WireLoopGame = () => {
+interface WireLoopGameProps {
+  nickname: string;
+}
+
+export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
-  const [gameState, setGameState] = useState<'menu' | 'playing' | 'levelSelect' | 'gameOver'>('menu');
+  const [gameState, setGameState] = useState<'menu' | 'playing' | 'levelSelect' | 'gameOver'>('playing');
   const [currentLevel, setCurrentLevel] = useState(1);
   const [gameStats, setGameStats] = useState<GameStats>({
     time: 0,
@@ -43,7 +47,7 @@ export const WireLoopGame = () => {
           debug: false
         }
       },
-      scene: [MenuScene, GameScene],
+      scene: GameScene, // Start with GameScene only
       scale: {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -78,6 +82,10 @@ export const WireLoopGame = () => {
     game.events.on('levelComplete', () => {
       setGameState('levelSelect');
     });
+
+    // Start the first level immediately
+    game.events.emit('startLevel', 1);
+    setCurrentLevel(1);
 
     return () => {
       game.destroy(true);
@@ -119,52 +127,13 @@ export const WireLoopGame = () => {
       {/* Game Canvas Container */}
       <div 
         ref={gameRef} 
-        className="absolute inset-0 flex items-center justify-center"
-        style={{ filter: gameState === 'playing' ? 'none' : 'blur(2px)' }}
+        style={{
+          width: 800,
+          height: 600,
+          margin: 'auto',
+          position: 'relative'
+        }}
       />
-
-      {/* Menu Overlay */}
-      {gameState === 'menu' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-          <div className="text-center space-y-8 p-8">
-            <div className="space-y-4">
-              <h1 className="text-6xl font-bold text-glow gradient-primary bg-clip-text text-transparent">
-                Wire Loop Escape
-              </h1>
-              <p className="text-xl text-muted-foreground">
-                Navigate the loop without touching the wire
-              </p>
-            </div>
-            
-            <div className="space-y-4">
-              <Button 
-                onClick={() => startGame(1)}
-                size="lg"
-                className="text-lg px-8 py-4 glow-primary"
-              >
-                Start Game
-              </Button>
-              
-              <div className="space-x-4">
-                <Button 
-                  onClick={goToLevelSelect}
-                  variant="outline"
-                  className="text-lg"
-                >
-                  Level Select
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="text-lg"
-                >
-                  <Settings className="w-5 h-5 mr-2" />
-                  Settings
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Level Selector Overlay */}
       {gameState === 'levelSelect' && (
