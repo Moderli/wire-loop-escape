@@ -41,6 +41,7 @@ export class GameScene extends Phaser.Scene {
   private wirePath!: Phaser.GameObjects.Graphics;
   private wirePoints: WirePoint[] = [];
   private startTime: number = 0;
+  private playerName: string = '';
   private gameStats = {
     time: 0,
     collisions: 0,
@@ -77,6 +78,10 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super({ key: 'GameScene' });
+  }
+
+  init(data: { playerName: string }) {
+    this.playerName = data.playerName;
   }
 
   /*

@@ -22,6 +22,12 @@
 
   <body>
     <div id="root"></div>
+    <div id="menu-container" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: white;">
+      <h1>Wire Loop Escape</h1>
+      <input type="text" id="name-input" placeholder="Enter your name" style="margin-top: 10px; padding: 5px;" />
+      <button id="start-button" style="margin-top: 10px; padding: 5px 10px;">Start Game</button>
+      <p id="warning-message" style="color: red; display: none;">Please enter your name!</p>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
