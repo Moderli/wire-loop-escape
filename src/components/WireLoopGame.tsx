@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Phaser from 'phaser';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { GameScene } from './game/GameScene';
 import { MenuScene } from './game/MenuScene';
 import { GameHUD } from './GameHUD';
@@ -30,6 +31,28 @@ export const WireLoopGame = ({ nickname }: WireLoopGameProps) => {
     score: 0
   });
   const [showCollisionFlash, setShowCollisionFlash] = useState(false);
+  const isMobile = useIsMobile();
+
+  useEffect(() => {
+    if (!gameRef.current) return;
+
+    if (isMobile) {
+      const handleScroll = () => {
+        const elem = gameRef.current;
+        if (elem && document.fullscreenElement !== elem) {
+          elem.requestFullscreen().catch(err => {
+            console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+          });
+        }
+      };
+      
+      window.addEventListener('scroll', handleScroll, { once: true });
+      
+      return () => {
+        window.removeEventListener('scroll', handleScroll);
+      };
+    }
+  }, [isMobile]);
 
   useEffect(() => {
     if (!gameRef.current) return;
