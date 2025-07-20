@@ -23,7 +23,7 @@ interface LevelSelectorProps {
 export const LevelSelector = ({ onLevelSelect, onBack, currentLevel }: LevelSelectorProps) => {
   const totalLevels = allLevels.length;
   const levels = Array.from({ length: totalLevels }, (_, i) => i + 1);
-  const unlockedLevels = Math.min(currentLevel + 1, totalLevels);
+  const unlockedLevels = currentLevel;
 
   const getDifficulty = (level: number) => {
     const difficulty = allLevels.find(l => l.id === level)?.difficulty || 'easy';

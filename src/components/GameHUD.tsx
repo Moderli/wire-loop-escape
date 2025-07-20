@@ -29,18 +29,6 @@ export const GameHUD = ({ stats }: GameHUDProps) => {
         <Timer className="w-4 h-4 text-accent" />
         <span className="text-xs md:text-sm font-mono">{formatTime(stats.time)}</span>
       </div>
-
-      {/* Collisions */}
-      <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-2 py-1 md:px-3 md:py-2 rounded-lg border">
-        <Zap className="w-4 h-4 text-collision" />
-        <span className="text-xs md:text-sm font-mono">{stats.collisions}</span>
-      </div>
-
-      {/* Score */}
-      <div className="flex items-center space-x-2 bg-card/80 backdrop-blur-sm px-2 py-1 md:px-3 md:py-2 rounded-lg border">
-        <Trophy className="w-4 h-4 text-primary" />
-        <span className="text-xs md:text-sm font-mono">{stats.score}</span>
-      </div>
     </div>
   );
 };

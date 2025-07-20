@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Phaser from 'phaser';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { GameScene } from './game/GameScene';
@@ -7,6 +8,16 @@ import { GameHUD } from './GameHUD';
 import { LevelSelector } from './LevelSelector';
 import { Button } from '@/components/ui/button';
 import { RotateCcw, Home, Settings } from 'lucide-react';
+import { LevelData } from '@/lib/types';
+
+// Dynamically import all levels to get their data
+const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
+const allLevels: LevelData[] = Object.values(levelModules).map((module: any) => {
+  const key = Object.keys(module).find(k => k.startsWith('level'));
+  return key ? module[key] : null;
+}).filter(Boolean);
+
+const totalLevels = allLevels.length;
 
 interface GameStats {
   time: number;
@@ -22,17 +33,28 @@ interface WireLoopGameProps {
 }
 
 export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLoopGameProps) => {
+  const navigate = useNavigate();
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
   const [gameState, setGameState] = useState<'menu' | 'playing' | 'levelSelect' | 'gameOver'>('playing');
   const [gameStats, setGameStats] = useState<GameStats>({
     time: 0,
     collisions: 0,
-    level: 1,
+    level: currentLevel,
     score: 0
   });
   const [showCollisionFlash, setShowCollisionFlash] = useState(false);
   const isMobile = useIsMobile();
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!gameRef.current) return;
@@ -95,6 +117,9 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
     const game = new Phaser.Game(config);
     phaserGameRef.current = game;
 
+    // Pass initial data to the scene
+    game.scene.start('GameScene', { nickname: nickname, level: currentLevel });
+
     // Listen for game events
     game.events.on('gameStateChange', (state: string) => {
       setGameState(state as any);
@@ -110,12 +135,8 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
     });
 
     game.events.on('levelComplete', () => {
-      setGameState('levelSelect');
+      setGameState('gameOver');
     });
-
-    // Start the first level immediately
-    game.events.emit('startLevel', currentLevel);
-    setCurrentLevel(currentLevel);
 
     return () => {
       game.destroy(true);
@@ -123,7 +144,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
     };
   }, []);
 
-  const startGame = (level: number = 1) => {
+  const startGame = (level: number) => {
     setCurrentLevel(level);
     setGameState('playing');
     if (phaserGameRef.current) {
@@ -132,21 +153,24 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   };
 
   const resetLevel = () => {
-    if (phaserGameRef.current) {
-      phaserGameRef.current.events.emit('resetLevel');
-    }
+    startGame(currentLevel);
   };
 
   const goToMenu = () => {
-    setGameState('menu');
-    if (phaserGameRef.current) {
-      phaserGameRef.current.events.emit('goToMenu');
-    }
+    navigate('/');
   };
 
   const goToLevelSelect = () => {
     setGameState('levelSelect');
   };
+
+  if (isMobile && !isLandscape) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-background text-center p-4">
+        <h2 className="text-xl text-primary">Please rotate your device to landscape mode to play.</h2>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-screen bg-game-background overflow-hidden">
@@ -186,15 +210,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
           {/* Game Controls */}
           <div className="absolute bottom-4 right-4 md:top-4 md:right-4 flex space-x-2">
             <Button
-              onClick={resetLevel}
-              variant="outline"
-              size="lg"
-              className="glow-primary"
-            >
-              <RotateCcw className="w-6 h-6" />
-            </Button>
-            <Button
-              onClick={goToMenu}
+              onClick={goToLevelSelect}
               variant="outline"
               size="lg"
             >
@@ -216,12 +232,18 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
             </div>
             
             <div className="space-x-4">
-              <Button 
-                onClick={() => startGame(currentLevel + 1)}
-                className="glow-primary"
-              >
-                Next Level
-              </Button>
+              {currentLevel < totalLevels ? (
+                <Button 
+                  onClick={() => startGame(currentLevel + 1)}
+                  className="glow-primary"
+                >
+                  Next Level
+                </Button>
+              ) : (
+                <Button onClick={goToLevelSelect} className="glow-primary">
+                  Select Level
+                </Button>
+              )}
               <Button 
                 onClick={resetLevel}
                 variant="outline"

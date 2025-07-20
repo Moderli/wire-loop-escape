@@ -1,22 +1,16 @@
 import { LevelData } from '@/lib/types';
 
-// A long and winding path with sharp turns
+// A more intense path with larger amplitude movements
 const gauntletPoints = [
   { x: -200, y: 0, z: 0 },
-  { x: -180, y: 0, z: 30 },
-  { x: -160, y: 0, z: -30 },
-  { x: -140, y: 30, z: 0 },
-  { x: -120, y: -30, z: 0 },
-  { x: -100, y: 0, z: 0 },
-  { x: -80, y: 50, z: 50 },
-  { x: -60, y: 0, z: 0 },
-  { x: -40, y: -50, z: -50 },
-  { x: 0, y: 0, z: 0 },
-  { x: 40, y: 80, z: 0 },
-  { x: 80, y: -80, z: 0 },
-  { x: 120, y: 80, z: 0 },
-  { x: 160, y: -80, z: 0 },
-  { x: 200, y: 0, z: 0 },
+  { x: -150, y: 0, z: 100 },
+  { x: -100, y: 0, z: -100 },
+  { x: -50, y: 100, z: 0 },
+  { x: 0, y: -100, z: 0 },
+  { x: 50, y: 0, z: 100 },
+  { x: 100, y: 0, z: -100 },
+  { x: 150, y: 120, z: 0 },
+  { x: 200, y: -120, z: 0 },
 ];
 
 export const level5: LevelData = {

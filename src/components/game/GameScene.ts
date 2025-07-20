@@ -19,7 +19,7 @@ for (const path in levelModules) {
 }
 
 // Add Catmull-Rom spline interpolation OUTSIDE the class
-function catmullRomSpline(points: WirePoint[], numSegments = 16) {
+function catmullRomSpline(points: WirePoint[], numSegments = 32) {
   const result: WirePoint[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     const p0 = points[i === 0 ? i : i - 1];
@@ -92,8 +92,15 @@ export class GameScene extends Phaser.Scene {
     super({ key: 'GameScene' });
   }
 
-  init(data: { playerName: string }) {
+  init(data: { playerName: string, level?: number }) {
     this.playerName = data.playerName;
+    const initialLevel = data.level || 1;
+    this.gameStats = {
+      time: 0,
+      collisions: 0,
+      level: initialLevel,
+      score: 0
+    };
   }
 
   /*
@@ -145,10 +152,7 @@ export class GameScene extends Phaser.Scene {
     this.startLabel.setVisible(false);
     this.endLabel.setVisible(false);
 
-    // Start with level 1
-    this.loadLevel(1);
-    // eslint-disable-next-line no-console
-    console.log('Level 1 loaded in create()');
+    this.loadLevel(this.gameStats.level);
 
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       this.mousePos.x = pointer.x;
@@ -214,52 +218,62 @@ export class GameScene extends Phaser.Scene {
   }
 
   private loadLevel(levelNumber: number) {
-    this.currentLevelData = this.getLevelData(levelNumber);
-    if (!this.currentLevelData) {
-      console.error(`Level ${levelNumber} not found!`);
-      this.currentLevelData = this.getLevelData(1);
+    let levelData = this.getLevelData(levelNumber);
+    if (!levelData) {
+      console.error(`Level ${levelNumber} not found, loading Level 1.`);
+      levelNumber = 1;
+      levelData = this.getLevelData(levelNumber);
     }
-
+    this.currentLevelData = levelData;
     this.gameStats.level = levelNumber;
 
-    // Calculate the bounding box of the original wire path
-    const rawPoints = this.currentLevelData.wirePath;
-    if (rawPoints.length === 0) return;
+    if (!this.currentLevelData) {
+      console.error(`Default level 1 also not found!`);
+      this.wirePoints = [];
+    } else {
+      const rawPoints = this.currentLevelData.wirePath;
+      if (rawPoints.length === 0) {
+        this.wirePoints = [];
+        console.warn(`Level ${levelNumber} has no wire points.`);
+      } else {
+        // Calculate the bounding box of the original wire path
+        let minX = rawPoints[0].x, maxX = rawPoints[0].x;
+        let minY = rawPoints[0].y, maxY = rawPoints[0].y;
 
-    let minX = rawPoints[0].x, maxX = rawPoints[0].x;
-    let minY = rawPoints[0].y, maxY = rawPoints[0].y;
+        for (let i = 1; i < rawPoints.length; i++) {
+          minX = Math.min(minX, rawPoints[i].x);
+          maxX = Math.max(maxX, rawPoints[i].x);
+          minY = Math.min(minY, rawPoints[i].y);
+          maxY = Math.max(maxY, rawPoints[i].y);
+        }
 
-    for (let i = 1; i < rawPoints.length; i++) {
-        minX = Math.min(minX, rawPoints[i].x);
-        maxX = Math.max(maxX, rawPoints[i].x);
-        minY = Math.min(minY, rawPoints[i].y);
-        maxY = Math.max(maxY, rawPoints[i].y);
+        const pathWidth = maxX - minX;
+        const pathHeight = maxY - minY;
+
+        // Determine the optimal scale to fit the path on the screen
+        const padding = 100; // px
+        const availableWidth = this.scale.width - padding * 2;
+        const availableHeight = this.scale.height - padding * 2;
+
+        const scaleX = availableWidth / pathWidth;
+        const scaleY = availableHeight / pathHeight;
+        const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of the available space
+
+        // Project and scale the points
+        const centerX = this.scale.width / 2;
+        const centerY = this.scale.height / 2;
+        const pathCenterX = minX + pathWidth / 2;
+        const pathCenterY = minY + pathHeight / 2;
+
+        this.wirePoints = this.currentLevelData.wirePath.map(p => ({
+          x: centerX + (p.x - pathCenterX) * scale,
+          y: centerY + (p.y - pathCenterY) * scale,
+        }));
+      }
     }
 
-    const pathWidth = maxX - minX;
-    const pathHeight = maxY - minY;
-
-    // Determine the optimal scale to fit the path on the screen
-    const padding = 100; // px
-    const availableWidth = this.scale.width - padding * 2;
-    const availableHeight = this.scale.height - padding * 2;
-
-    const scaleX = availableWidth / pathWidth;
-    const scaleY = availableHeight / pathHeight;
-    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of the available space
-
-    // Project and scale the points
-    const centerX = this.scale.width / 2;
-    const centerY = this.scale.height / 2;
-    const pathCenterX = minX + pathWidth / 2;
-    const pathCenterY = minY + pathHeight / 2;
-
-    this.wirePoints = this.currentLevelData.wirePath.map(p => ({
-      x: centerX + (p.x - pathCenterX) * scale,
-      y: centerY + (p.y - pathCenterY) * scale,
-    }));
-
     this.drawWirePath();
+    this.updateStats(); // Update HUD with correct level
   }
 
   private getLevelData(levelNumber: number): LevelData | null {
@@ -378,32 +392,11 @@ export class GameScene extends Phaser.Scene {
   }
 
   private startLevel(levelNumber: number) {
-    // eslint-disable-next-line no-console
-    console.log('startLevel called with level:', levelNumber);
-    
-    // Hide old labels before loading new level
-    if (this.startLabel) this.startLabel.setVisible(false);
-    if (this.endLabel) this.endLabel.setVisible(false);
-
-    this.loadLevel(levelNumber);
-    this.gameStats = {
-      time: 0,
-      collisions: 0,
-      level: levelNumber,
-      score: 0
-    };
-    this.startTime = this.time.now;
-    this.gameStarted = true;
-    this.scene.start('GameScene');
+    this.scene.start('GameScene', { playerName: this.playerName, level: levelNumber });
   }
 
   private resetLevel() {
-    this.gameStats.time = 0;
-    this.gameStats.collisions = 0;
-    this.gameStats.score = 0;
-    this.startTime = this.time.now;
-    this.gameStarted = true;
-    this.updateStats();
+    this.scene.start('GameScene', { playerName: this.playerName, level: this.gameStats.level });
   }
 
   private goToMenu() {
@@ -455,8 +448,8 @@ export class GameScene extends Phaser.Scene {
     this.gameStarted = false;
     this.win = true;
     this.elapsedFollowTime = (this.time.now - this.followStartTime) / 1000;
-    this.showReport('You Win!', true);
-    // Wait for next/retry button
+    this.game.events.emit('levelComplete');
+    // The UI will now handle the report screen
   }
 
   private showReport(msg: string, win: boolean = false) {
@@ -512,8 +505,11 @@ export class GameScene extends Phaser.Scene {
         this.retryButton.setVisible(false);
         this.nextButton.setVisible(false);
         this.progressIndex = 0;
-        this.gameStats.level += 1;
-        this.loadLevel(this.gameStats.level);
+        
+        // This is now handled by the React component
+        // this.gameStats.level += 1;
+        // this.loadLevel(this.gameStats.level);
+
         this.gameState = 'preGame';
         this.followStartTime = 0;
         this.elapsedFollowTime = 0;
@@ -610,6 +606,12 @@ export class GameScene extends Phaser.Scene {
     }
 
     if (this.gameState === 'warning') {
+      const elapsed = this.time.now - this.warningStartTime;
+      if (elapsed < 300) { 
+        this.warningOverlay.setAlpha(0.2 * Math.sin(elapsed / 50));
+      } else {
+        this.warningOverlay.setAlpha(0);
+      }
       if (isHolding && !isOffTrack && !isSkipping) {
         // Player recovered
         this.gameState = 'following';

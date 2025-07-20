@@ -12,6 +12,23 @@ export default function Index() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const response = await fetch('/api/sessions');
+        if (response.ok) {
+          const data = await response.json();
+          setNickname(data.nickname);
+        } else {
+          console.error('Failed to fetch session');
+        }
+      } catch (error) {
+        console.error('Error fetching session:', error);
+      }
+    };
+    fetchSession();
+  }, []);
+
+  useEffect(() => {
     const fetchMetrics = async () => {
       const data = await getMetrics();
       setMetrics(data);
