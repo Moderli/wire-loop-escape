@@ -80,6 +80,11 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   useEffect(() => {
     if (!gameRef.current) return;
 
+    // Destroy the existing game instance if it exists
+    if (phaserGameRef.current) {
+        phaserGameRef.current.destroy(true);
+    }
+
     const gameContainer = gameRef.current;
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
@@ -142,7 +147,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
       game.destroy(true);
       gameContainer.removeEventListener('contextmenu', handleContextMenu);
     };
-  }, []);
+  }, [currentLevel]);
 
   const startGame = (level: number) => {
     setCurrentLevel(level);
@@ -245,7 +250,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
                 </Button>
               )}
               <Button 
-                onClick={resetLevel}
+                onClick={() => setCurrentLevel(currentLevel)}
                 variant="outline"
               >
                 Retry

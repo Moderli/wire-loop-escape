@@ -1,23 +1,39 @@
 import { LevelData } from '@/lib/types';
 
-// A path that weaves like a double helix
+// A smoother path that weaves like a double helix with better collision detection
 const helixPoints = [
   { x: -160, y: 0, z: 0 },
+  { x: -150, y: 15, z: 10 },
   { x: -140, y: 30, z: 20 },
+  { x: -130, y: 45, z: 10 },
   { x: -120, y: 60, z: 0 },
+  { x: -110, y: 45, z: -10 },
   { x: -100, y: 30, z: -20 },
+  { x: -90, y: 15, z: -10 },
   { x: -80, y: 0, z: 0 },
+  { x: -70, y: -15, z: 10 },
   { x: -60, y: -30, z: 20 },
+  { x: -50, y: -45, z: 10 },
   { x: -40, y: -60, z: 0 },
+  { x: -30, y: -45, z: -10 },
   { x: -20, y: -30, z: -20 },
+  { x: -10, y: -15, z: -10 },
   { x: 0, y: 0, z: 0 },
+  { x: 10, y: 15, z: 10 },
   { x: 20, y: 30, z: 20 },
+  { x: 30, y: 45, z: 10 },
   { x: 40, y: 60, z: 0 },
+  { x: 50, y: 45, z: -10 },
   { x: 60, y: 30, z: -20 },
+  { x: 70, y: 15, z: -10 },
   { x: 80, y: 0, z: 0 },
+  { x: 90, y: -15, z: 10 },
   { x: 100, y: -30, z: 20 },
+  { x: 110, y: -45, z: 10 },
   { x: 120, y: -60, z: 0 },
+  { x: 130, y: -45, z: -10 },
   { x: 140, y: -30, z: -20 },
+  { x: 150, y: -15, z: -10 },
   { x: 160, y: 0, z: 0 },
 ];
 

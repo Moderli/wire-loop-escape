@@ -52,6 +52,7 @@ function catmullRomSpline(points: WirePoint[], numSegments = 32) {
 export class GameScene extends Phaser.Scene {
   private wirePath!: Phaser.GameObjects.Graphics;
   private wirePoints: WirePoint[] = [];
+  private smoothPoints: Phaser.Math.Vector2[] = [];
   private startTime: number = 0;
   private playerName: string = '';
   private gameStats = {
@@ -205,6 +206,13 @@ export class GameScene extends Phaser.Scene {
     this.blurOverlay.setVisible(false);
   }
 
+  shutdown() {
+    // Clean up event listeners to prevent memory leaks and state conflicts
+    this.game.events.off('startLevel', this.startLevel, this);
+    this.game.events.off('resetLevel', this.resetLevel, this);
+    this.game.events.off('goToMenu', this.goToMenu, this);
+  }
+
   private setupInput() {
     // Mouse/touch input
     // No tool to move, so no pointermove/drag logic needed
@@ -272,6 +280,13 @@ export class GameScene extends Phaser.Scene {
       }
     }
 
+    // Generate smoothed points once for consistency
+    if (this.wirePoints.length > 1) {
+        this.smoothPoints = catmullRomSpline(this.wirePoints, 200) as Phaser.Math.Vector2[];
+    } else {
+        this.smoothPoints = [];
+    }
+
     this.drawWirePath();
     this.updateStats(); // Update HUD with correct level
   }
@@ -287,7 +302,7 @@ export class GameScene extends Phaser.Scene {
       this.wirePath.strokeCircle(400, 300, 50);
       return;
     }
-    const smoothPoints = catmullRomSpline(this.wirePoints, 12);
+    const smoothPoints = this.smoothPoints;
     // Draw completed (green) segment
     if (this.progressIndex > 0) {
       this.wirePath.lineStyle(18, 0x00ff88, 0.18); // Green glow
@@ -438,7 +453,22 @@ export class GameScene extends Phaser.Scene {
     // Ensure warning overlay is hidden
     this.warningOverlay.setAlpha(0);
     
-    this.showReport('You Lost!', false);
+    // Random motivational messages for when the player loses
+    const motivationalMessages = [
+      "Take a deep breath",
+      "Slow man !!!",
+      "Be patient",
+      "Steady hands win the game",
+      "Focus and try again",
+      "Precision over speed",
+      "Stay calm and focused",
+      "Practice makes perfect",
+      "You've got this!",
+      "Almost there, keep trying"
+    ];
+    
+    const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
+    this.showReport(`You Lost!\n${randomMessage}`, false);
     // Wait for retry button
   }
 
@@ -550,7 +580,7 @@ export class GameScene extends Phaser.Scene {
 
     const pointer = this.input.activePointer;
     const isHolding = pointer.isDown;
-    const smoothPoints = catmullRomSpline(this.wirePoints, 12);
+    const smoothPoints = this.smoothPoints;
 
     let minDist = Infinity;
     let closestPoint = 0;
@@ -568,8 +598,9 @@ export class GameScene extends Phaser.Scene {
     }
 
     const isOffTrack = minDist > 15;
-    // This setting prevents the player from skipping large sections of the wire.
-    const maxProgressJump = 30; // Tunable: how many points ahead the player can be.
+    
+    // Prevent skipping: only allow progress within a small range ahead
+    const maxProgressJump = 20; // Maximum points the player can be ahead
     const isSkipping = closestPoint > this.progressIndex + maxProgressJump;
 
     if (this.gameState === 'following') {
@@ -594,8 +625,8 @@ export class GameScene extends Phaser.Scene {
         this.followStartTime = this.time.now;
       }
 
-      // Update progress, it's valid if we are here
-      if (closestPoint > this.progressIndex) {
+      // Update progress only if within valid range and actually progressing forward
+      if (closestPoint > this.progressIndex && !isSkipping) {
         this.progressIndex = closestPoint;
         this.drawWirePath();
       }
