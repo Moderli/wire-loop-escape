@@ -88,6 +88,7 @@ export class GameScene extends Phaser.Scene {
   private endLabel!: Phaser.GameObjects.Text;
   private warningOverlay!: Phaser.GameObjects.Rectangle;
   private warningStartTime: number = 0;
+  private lastValidTime: number = 0; // Track when player was last on valid path
 
   constructor() {
     super({ key: 'GameScene' });
@@ -177,8 +178,14 @@ export class GameScene extends Phaser.Scene {
     });
 
     this.input.on('pointerup', () => {
+      // Don't immediately trigger loss - give a brief grace period
       if (this.gameState === 'following') {
-        this.triggerLoss();
+        // Set a short timeout to allow for brief releases
+        setTimeout(() => {
+          if (this.gameState === 'following' && !this.input.activePointer.isDown) {
+            this.triggerLoss();
+          }
+        }, 50); // 50ms grace period for brief releases
       }
     });
 
@@ -302,17 +309,31 @@ export class GameScene extends Phaser.Scene {
       this.wirePath.strokeCircle(400, 300, 50);
       return;
     }
+    
+    // Dynamically calculate segments based on distance
+    const segments = [];
+    for (let i = 0; i < this.wirePoints.length - 1; i++) {
+        const dist = Phaser.Math.Distance.BetweenPoints(this.wirePoints[i], this.wirePoints[i+1]);
+        segments.push(Math.ceil(dist / 10)); // 10px per segment
+    }
+    
     const smoothPoints = this.smoothPoints;
+    
+    // Check if we're on mobile (rough approximation)
+    const isMobile = window.innerWidth < 768;
+    const wireThickness = isMobile ? 2.0 : 1; // Double thickness on mobile
+    const glowThickness = isMobile ? 1.8 : 1; // 80% thicker glow on mobile
+    
     // Draw completed (green) segment
     if (this.progressIndex > 0) {
-      this.wirePath.lineStyle(18, 0x00ff88, 0.18); // Green glow
+      this.wirePath.lineStyle(18 * glowThickness, 0x00ff88, 0.18); // Green glow
       this.wirePath.beginPath();
       this.wirePath.moveTo(smoothPoints[0].x, smoothPoints[0].y);
       for (let i = 1; i <= this.progressIndex; i++) {
         this.wirePath.lineTo(smoothPoints[i].x, smoothPoints[i].y);
       }
       this.wirePath.strokePath();
-      this.wirePath.lineStyle(8, 0x00ff88, 1); // Green main
+      this.wirePath.lineStyle(8 * wireThickness, 0x00ff88, 1); // Green main
       this.wirePath.beginPath();
       this.wirePath.moveTo(smoothPoints[0].x, smoothPoints[0].y);
       for (let i = 1; i <= this.progressIndex; i++) {
@@ -321,43 +342,45 @@ export class GameScene extends Phaser.Scene {
       this.wirePath.strokePath();
     } else {
       // Always draw at least the first point for green
-      this.wirePath.lineStyle(8, 0x00ff88, 0.5);
+      this.wirePath.lineStyle(8 * wireThickness, 0x00ff88, 0.5);
       this.wirePath.beginPath();
       this.wirePath.moveTo(smoothPoints[0].x, smoothPoints[0].y);
       this.wirePath.lineTo(smoothPoints[0].x, smoothPoints[0].y);
       this.wirePath.strokePath();
     }
     // Draw remaining segment
-    this.wirePath.lineStyle(32, this.gameState === 'following' ? 0xffe066 : 0x7f7fff, this.gameState === 'following' ? 0.18 : 0.10);
+    this.wirePath.lineStyle(32 * glowThickness, this.gameState === 'following' ? 0xffe066 : 0x7f7fff, this.gameState === 'following' ? 0.18 : 0.10);
     this.wirePath.beginPath();
     this.wirePath.moveTo(smoothPoints[Math.max(this.progressIndex, 0)].x, smoothPoints[Math.max(this.progressIndex, 0)].y);
     for (let i = Math.max(this.progressIndex, 0); i < smoothPoints.length; i++) {
       this.wirePath.lineTo(smoothPoints[i].x, smoothPoints[i].y);
     }
     this.wirePath.strokePath();
-    this.wirePath.lineStyle(18, this.gameState === 'following' ? 0xffe066 : 0x6366f1, this.gameState === 'following' ? 0.28 : 0.18);
+    this.wirePath.lineStyle(18 * glowThickness, this.gameState === 'following' ? 0xffe066 : 0x6366f1, this.gameState === 'following' ? 0.28 : 0.18);
     this.wirePath.beginPath();
     this.wirePath.moveTo(smoothPoints[Math.max(this.progressIndex, 0)].x, smoothPoints[Math.max(this.progressIndex, 0)].y);
     for (let i = Math.max(this.progressIndex, 0); i < smoothPoints.length; i++) {
       this.wirePath.lineTo(smoothPoints[i].x, smoothPoints[i].y);
     }
     this.wirePath.strokePath();
-    this.wirePath.lineStyle(8, this.gameState === 'following' ? 0xffe066 : 0xb0b0b0, 1);
+    this.wirePath.lineStyle(8 * wireThickness, this.gameState === 'following' ? 0xffe066 : 0xb0b0b0, 1);
     this.wirePath.beginPath();
     this.wirePath.moveTo(smoothPoints[Math.max(this.progressIndex, 0)].x, smoothPoints[Math.max(this.progressIndex, 0)].y);
     for (let i = Math.max(this.progressIndex, 0); i < smoothPoints.length; i++) {
       this.wirePath.lineTo(smoothPoints[i].x, smoothPoints[i].y);
     }
     this.wirePath.strokePath();
-    // Draw start and end points
+    
+    // Draw start and end points (larger on mobile)
+    const pointSize = isMobile ? 25 : 15; // Increased from 20 to 25 for mobile
     const startPoint = this.wirePoints[0];
     this.wirePath.fillStyle(0x00ff00, 1);
-    this.wirePath.fillCircle(startPoint.x, startPoint.y, 15); // Increased size
+    this.wirePath.fillCircle(startPoint.x, startPoint.y, pointSize);
     this.startLabel.setPosition(startPoint.x, startPoint.y - 40).setVisible(true);
 
     const endPoint = this.wirePoints[this.wirePoints.length - 1];
     this.wirePath.fillStyle(0xff0000, 1);
-    this.wirePath.fillCircle(endPoint.x, endPoint.y, 15); // Increased size
+    this.wirePath.fillCircle(endPoint.x, endPoint.y, pointSize);
     this.endLabel.setPosition(endPoint.x, endPoint.y - 40).setVisible(true);
   }
 
@@ -427,7 +450,9 @@ export class GameScene extends Phaser.Scene {
     if (this.wirePoints.length === 0) return false;
     const startPoint = this.wirePoints[0];
     const distance = Phaser.Math.Distance.Between(x, y, startPoint.x, startPoint.y);
-    return distance < 25; // Increased clickable radius
+    const isMobile = window.innerWidth < 768;
+    const touchRadius = isMobile ? 45 : 25; // Increased from 35 to 45 for mobile
+    return distance < touchRadius;
   }
 
   /* No longer needed, logic is now in update()
@@ -445,6 +470,10 @@ export class GameScene extends Phaser.Scene {
 
   private triggerLoss() {
     // this.sound.play('loss', { volume: 0.4 });
+    
+    // Add some debugging to understand why loss was triggered
+    console.log('Loss triggered. Game state:', this.gameState, 'Time since start:', this.time.now - this.followStartTime);
+    
     this.gameState = 'lost';
     this.gameStarted = false;
     this.win = false;
@@ -468,8 +497,9 @@ export class GameScene extends Phaser.Scene {
     ];
     
     const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-    this.showReport(`You Lost!\n${randomMessage}`, false);
-    // Wait for retry button
+    
+    // Emit the loss event to the React component instead of showing internal retry screen
+    this.game.events.emit('gameLoss', randomMessage);
   }
 
   private triggerWin() {
@@ -582,9 +612,15 @@ export class GameScene extends Phaser.Scene {
     const isHolding = pointer.isDown;
     const smoothPoints = this.smoothPoints;
 
+    // More robust collision detection - check multiple points around current position
     let minDist = Infinity;
     let closestPoint = 0;
-    for (let i = 0; i < smoothPoints.length; i++) {
+    const searchRadius = 50; // Look ahead and behind for closest point
+    
+    const startIndex = Math.max(0, this.progressIndex - searchRadius);
+    const endIndex = Math.min(smoothPoints.length - 1, this.progressIndex + searchRadius);
+    
+    for (let i = startIndex; i <= endIndex; i++) {
         const dist = Phaser.Math.Distance.Between(
             pointer.x,
             pointer.y,
@@ -597,36 +633,60 @@ export class GameScene extends Phaser.Scene {
         }
     }
 
-    const isOffTrack = minDist > 15;
+    // Check if we're on mobile for more forgiving collision detection
+    const isMobile = window.innerWidth < 768;
     
-    // Prevent skipping: only allow progress within a small range ahead
-    const maxProgressJump = 20; // Maximum points the player can be ahead
+    // Dynamic tolerance based on current level complexity
+    const baseTolerance = isMobile ? 40 : 35;
+    const levelComplexityMultiplier = this.gameStats.level >= 4 ? 1.5 : 1.0; // Extra tolerance for complex levels
+    const trackTolerance = baseTolerance * levelComplexityMultiplier;
+    const isOffTrack = minDist > trackTolerance;
+    
+    // Strict skipping detection to prevent cheating
+    const maxProgressJump = isMobile ? 25 : 20; // Much stricter to prevent skipping
     const isSkipping = closestPoint > this.progressIndex + maxProgressJump;
+    
+    // Additional validation: check if the player is actually following the path sequentially
+    const isValidProgression = closestPoint <= this.progressIndex + maxProgressJump && closestPoint >= this.progressIndex - 10;
 
     if (this.gameState === 'following') {
       if (!isHolding) {
-        // This is a backup check, pointerup event should handle it.
-        this.triggerLoss();
-        return;
+        // Remove this backup check as it's causing false positives
+        // The pointerup event handler will handle mouse/touch releases
+        // this.triggerLoss();
+        // return;
       }
       
-      if (isOffTrack || isSkipping) {
-        this.gameState = 'warning';
-        this.warningStartTime = this.time.now;
-        this.tweens.add({
-            targets: this.warningOverlay,
-            alpha: 0.4,
-            duration: 200,
-        });
+      if (isOffTrack || isSkipping || !isValidProgression) {
+        // Only trigger warning if player has been off-track for a significant period
+        const currentTime = this.time.now;
+        if (this.lastValidTime === 0) {
+          this.lastValidTime = currentTime;
+        }
+        
+        // Much longer grace period for complex levels
+        const gracePeriod = this.gameStats.level >= 4 ? 500 : 300;
+        if (currentTime - this.lastValidTime > gracePeriod) {
+          this.gameState = 'warning';
+          this.warningStartTime = this.time.now;
+          this.tweens.add({
+              targets: this.warningOverlay,
+              alpha: 0.4,
+              duration: 200,
+          });
+        }
         return;
+      } else {
+        // Player is on track, reset the valid time tracker
+        this.lastValidTime = 0;
       }
 
       if (this.followStartTime === 0) {
         this.followStartTime = this.time.now;
       }
 
-      // Update progress only if within valid range and actually progressing forward
-      if (closestPoint > this.progressIndex && !isSkipping) {
+      // Only update progress if moving forward and following valid progression
+      if (closestPoint > this.progressIndex && !isSkipping && isValidProgression) {
         this.progressIndex = closestPoint;
         this.drawWirePath();
       }
@@ -651,8 +711,8 @@ export class GameScene extends Phaser.Scene {
             alpha: 0,
             duration: 200,
         });
-      } else if (this.time.now - this.warningStartTime > 500 || !isHolding) {
-        // Timer ran out or player released click/touch
+      } else if (this.time.now - this.warningStartTime > 2000 || !isHolding) {
+        // Much longer warning time (2 seconds) for complex levels
         this.triggerLoss();
       }
     }

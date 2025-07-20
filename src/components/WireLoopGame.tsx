@@ -46,6 +46,17 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   const [showCollisionFlash, setShowCollisionFlash] = useState(false);
   const isMobile = useIsMobile();
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [motivationalMessage, setMotivationalMessage] = useState('');
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,6 +101,43 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
       e.preventDefault();
     };
     gameContainer.addEventListener('contextmenu', handleContextMenu);
+
+    // Request fullscreen when the game starts
+    const requestFullscreen = () => {
+      if (isMobile) {
+        // For mobile devices, try multiple fullscreen methods
+        const elem = document.documentElement; // Use document.documentElement instead of gameContainer for better fullscreen
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => console.log('requestFullscreen failed:', err));
+        } else if ((elem as any).webkitRequestFullscreen) {
+          (elem as any).webkitRequestFullscreen().catch(err => console.log('webkitRequestFullscreen failed:', err));
+        } else if ((elem as any).mozRequestFullScreen) {
+          (elem as any).mozRequestFullScreen().catch(err => console.log('mozRequestFullScreen failed:', err));
+        } else if ((elem as any).msRequestFullscreen) {
+          (elem as any).msRequestFullscreen().catch(err => console.log('msRequestFullscreen failed:', err));
+        }
+        
+        // Also try to lock orientation to landscape on mobile
+        if ('orientation' in screen && 'lock' in screen.orientation) {
+          (screen.orientation as any).lock('landscape').catch(err => console.log('Orientation lock failed:', err));
+        }
+        
+        // Also try to hide the address bar on mobile
+        setTimeout(() => {
+          window.scrollTo(0, 1);
+        }, 100);
+      }
+      // Removed desktop fullscreen functionality
+    };
+
+    // Add multiple event listeners for better mobile detection
+    if (isMobile) {
+      gameContainer.addEventListener('click', requestFullscreen, { once: true });
+      gameContainer.addEventListener('touchstart', requestFullscreen, { once: true });
+      gameContainer.addEventListener('touchend', requestFullscreen, { once: true });
+      // Also trigger on any interaction with the page
+      document.addEventListener('touchstart', requestFullscreen, { once: true });
+    }
 
     const config: Phaser.Types.Core.GameConfig = {
       type: Phaser.AUTO,
@@ -143,21 +191,35 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
       setGameState('gameOver');
     });
 
+    game.events.on('gameLoss', (message: string) => {
+      setMotivationalMessage(message);
+      setGameState('gameOver'); // We'll use gameOver state for both win and loss
+    });
+
     return () => {
       game.destroy(true);
       gameContainer.removeEventListener('contextmenu', handleContextMenu);
+      if (isMobile) {
+        gameContainer.removeEventListener('click', requestFullscreen);
+        gameContainer.removeEventListener('touchstart', requestFullscreen);
+        gameContainer.removeEventListener('touchend', requestFullscreen);
+        document.removeEventListener('touchstart', requestFullscreen);
+      }
     };
-  }, [currentLevel]);
+  }, [currentLevel, isMobile]);
 
   const startGame = (level: number) => {
     setCurrentLevel(level);
     setGameState('playing');
+    setMotivationalMessage(''); // Clear any motivational message when starting a new game
     if (phaserGameRef.current) {
       phaserGameRef.current.events.emit('startLevel', level);
     }
   };
 
   const resetLevel = () => {
+    setMotivationalMessage(''); // Clear motivational message when resetting
+    setGameState('playing'); // Reset to playing state
     startGame(currentLevel);
   };
 
@@ -196,6 +258,9 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
         }}
       />
 
+      {/* Fullscreen prompt */}
+      {/* Removed fullscreen prompt - now automatically goes fullscreen on first touch */}
+
       {/* Level Selector Overlay */}
       {gameState === 'levelSelect' && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
@@ -227,41 +292,87 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
 
       {/* Game Over Screen */}
       {gameState === 'gameOver' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm">
-          <div className="text-center space-y-6 p-8">
-            <h2 className="text-4xl font-bold text-primary">Level Complete!</h2>
-            <div className="space-y-2 text-lg">
-              <p>Time: {gameStats.time.toFixed(1)}s</p>
-              <p>Collisions: {gameStats.collisions}</p>
-              <p className="text-primary font-bold">Score: {gameStats.score}</p>
-            </div>
-            
-            <div className="space-x-4">
-              {currentLevel < totalLevels ? (
-                <Button 
-                  onClick={() => startGame(currentLevel + 1)}
-                  className="glow-primary"
-                >
-                  Next Level
-                </Button>
-              ) : (
-                <Button onClick={goToLevelSelect} className="glow-primary">
-                  Select Level
-                </Button>
-              )}
-              <Button 
-                onClick={() => setCurrentLevel(currentLevel)}
-                variant="outline"
-              >
-                Retry
-              </Button>
-              <Button 
-                onClick={goToMenu}
-                variant="outline"
-              >
-                Menu
-              </Button>
-            </div>
+        <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-50">
+          <div className="text-center space-y-6 p-8 max-w-md mx-auto">
+            {motivationalMessage ? (
+              <>
+                <h2 className="text-3xl md:text-4xl font-bold text-red-400">You Lost!</h2>
+                <p className="text-xl md:text-2xl text-yellow-300 font-medium">{motivationalMessage}</p>
+                <div className="space-y-2 text-base md:text-lg">
+                  <p>Time: {gameStats.time.toFixed(1)}s</p>
+                  <p>Level: {gameStats.level}</p>
+                </div>
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center">
+                  <Button 
+                    onClick={resetLevel}
+                    className="glow-primary w-full md:w-auto px-8 py-3 text-lg"
+                    size="lg"
+                  >
+                    Retry
+                  </Button>
+                  <Button 
+                    onClick={goToLevelSelect}
+                    variant="outline"
+                    className="w-full md:w-auto px-6 py-3"
+                    size="lg"
+                  >
+                    Level Select
+                  </Button>
+                  <Button 
+                    onClick={goToMenu}
+                    variant="outline"
+                    className="w-full md:w-auto px-6 py-3"
+                    size="lg"
+                  >
+                    Menu
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 className="text-3xl md:text-4xl font-bold text-primary">Level Complete!</h2>
+                <div className="space-y-2 text-base md:text-lg">
+                  <p>Time: {gameStats.time.toFixed(1)}s</p>
+                  <p>Level: {gameStats.level}</p>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-center">
+                  {currentLevel < totalLevels ? (
+                    <Button 
+                      onClick={() => startGame(currentLevel + 1)}
+                      className="glow-primary w-full md:w-auto px-8 py-3 text-lg"
+                      size="lg"
+                    >
+                      Next Level
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={goToLevelSelect} 
+                      className="glow-primary w-full md:w-auto px-8 py-3 text-lg"
+                      size="lg"
+                    >
+                      Select Level
+                    </Button>
+                  )}
+                  <Button 
+                    onClick={() => setCurrentLevel(currentLevel)}
+                    variant="outline"
+                    className="w-full md:w-auto px-6 py-3"
+                    size="lg"
+                  >
+                    Retry
+                  </Button>
+                  <Button 
+                    onClick={goToMenu}
+                    variant="outline"
+                    className="w-full md:w-auto px-6 py-3"
+                    size="lg"
+                  >
+                    Menu
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
