@@ -89,6 +89,7 @@ export class GameScene extends Phaser.Scene {
   private warningOverlay!: Phaser.GameObjects.Rectangle;
   private warningStartTime: number = 0;
   private lastValidTime: number = 0; // Track when player was last on valid path
+  private lastCollisionCheck: number = 0; // Track last collision check time for performance
 
   constructor() {
     super({ key: 'GameScene' });
@@ -289,7 +290,9 @@ export class GameScene extends Phaser.Scene {
 
     // Generate smoothed points once for consistency
     if (this.wirePoints.length > 1) {
-        this.smoothPoints = catmullRomSpline(this.wirePoints, 200) as Phaser.Math.Vector2[];
+        // Use fewer smooth points for complex levels to improve performance
+        const smoothingSegments = this.gameStats.level >= 6 ? 50 : 200; // Even fewer segments for level 6+
+        this.smoothPoints = catmullRomSpline(this.wirePoints, smoothingSegments) as Phaser.Math.Vector2[];
     } else {
         this.smoothPoints = [];
     }
@@ -615,7 +618,7 @@ export class GameScene extends Phaser.Scene {
     // More robust collision detection - check multiple points around current position
     let minDist = Infinity;
     let closestPoint = 0;
-    const searchRadius = 50; // Look ahead and behind for closest point
+    const searchRadius = this.gameStats.level >= 6 ? 15 : 50; // Much smaller search radius for complex levels
     
     const startIndex = Math.max(0, this.progressIndex - searchRadius);
     const endIndex = Math.min(smoothPoints.length - 1, this.progressIndex + searchRadius);

@@ -1,10 +1,11 @@
 import { LevelData } from '@/lib/types';
 
+// Simplified vortex with much fewer segments for optimal performance
 const vortexPoints = [];
 const radius = 150;
-const segments = 120; // Increased segments for a smoother circle
-const zigzagFrequency = 5; // How many zigzags in total
-const zigzagAmplitude = 20; // How much they go in and out
+const segments = 30; // Further reduced from 60 to 30 for better performance
+const zigzagFrequency = 3; // Reduced frequency for even smoother gameplay
+const zigzagAmplitude = 12; // Further reduced amplitude
 
 for (let i = 0; i <= segments; i++) {
   const angle = (i / segments) * 2 * Math.PI * 0.95; // Use 95% of a circle to create a gap
