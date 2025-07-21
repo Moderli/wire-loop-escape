@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { LevelData, WirePoint } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults'; // at the top if not already imported
 
 // Dynamically import all levels from the levels folder
 const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
@@ -970,7 +971,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createEmergencyLevel(): LevelData {
-    return {
+    return createLevelWithDefaults({
       id: 1,
       name: 'Emergency Level',
       difficulty: 'easy',
@@ -981,7 +982,7 @@ export class GameScene extends Phaser.Scene {
         { x: 50, y: -50 },
         { x: 100, y: 0 }
       ]
-    };
+    });
   }
 
   private createDefaultWirePath(): WirePoint[] {

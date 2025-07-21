@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SocialButtons, SocialButtonsHorizontal } from '@/components/SocialButtons';
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
@@ -19,11 +20,9 @@ export default function Index() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground overflow-hidden p-4">
-      {/* Top left social buttons (placeholders) */}
-      <div className="absolute top-4 left-4 flex space-x-2 z-10">
-        <button className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded shadow">Like</button>
-        <button className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded shadow">Share</button>
-        <button className="bg-black/80 hover:bg-black text-xs px-3 py-1 rounded shadow">Follow</button>
+      {/* Top left social buttons */}
+      <div className="absolute top-4 left-4 z-10">
+        <SocialButtons />
       </div>
 
       {/* Top right theme toggle and graphics quality */}
@@ -69,6 +68,14 @@ export default function Index() {
               Read Blog
             </button>
           </Link>
+          
+          {/* Social interaction buttons */}
+          <div className="mt-6 pt-4 border-t border-muted-foreground/20">
+            <div className="flex flex-col items-center space-y-2">
+              <span className="text-sm text-muted-foreground">Connect with us</span>
+              <SocialButtonsHorizontal />
+            </div>
+          </div>
         </div>
       </div> 
 

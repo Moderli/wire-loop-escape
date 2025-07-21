@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SocialButtonsHorizontal } from '@/components/SocialButtons';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 
 interface BlogPost {
@@ -238,7 +239,10 @@ export default function BlogPostPage() {
                 Back to Blog
               </Button>
             </Link>
-            <ThemeToggle />
+            <div className="flex items-center space-x-4">
+              <SocialButtonsHorizontal />
+              <ThemeToggle />
+            </div>
           </div>
           
           <h1 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent">

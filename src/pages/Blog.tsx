@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { SocialButtonsHorizontal } from '@/components/SocialButtons';
 import { ArrowLeft, Calendar, User } from 'lucide-react';
 
 interface BlogPost {
@@ -80,7 +81,10 @@ export default function Blog() {
               Wire Loop Blog
             </h1>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center space-x-4">
+            <SocialButtonsHorizontal />
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Blog Posts */}
