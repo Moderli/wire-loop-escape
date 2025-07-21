@@ -1,54 +1,24 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { getMetrics } from '@/lib/metrics';
+import { Link } from 'react-router-dom';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
 
 export default function Index() {
   const [nickname, setNickname] = useState('');
-  const [metrics, setMetrics] = useState({ visitors: 0, timeSpent: 0 });
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchSession = async () => {
-      try {
-        const response = await fetch('/api/sessions');
-        if (response.ok) {
-          const data = await response.json();
-          setNickname(data.nickname);
-        } else {
-          console.error('Failed to fetch session');
-        }
-      } catch (error) {
-        console.error('Error fetching session:', error);
-      }
-    };
-    fetchSession();
-  }, []);
-
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      const data = await getMetrics();
-      setMetrics(data);
-    };
-    fetchMetrics();
-  }, []);
 
   const handlePlay = async () => {
     if (nickname.trim()) {
-      await fetch('/api/metrics', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname: nickname.trim() }),
-      });
       navigate('/game', { state: { nickname } });
     }
   };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-[#181c23] text-white overflow-hidden p-4">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground overflow-hidden p-4">
       {/* Top left social buttons (placeholders) */}
       <div className="absolute top-4 left-4 flex space-x-2 z-10">
         <button className="bg-blue-600 hover:bg-blue-700 text-xs px-3 py-1 rounded shadow">Like</button>
@@ -56,14 +26,17 @@ export default function Index() {
         <button className="bg-black/80 hover:bg-black text-xs px-3 py-1 rounded shadow">Follow</button>
       </div>
 
-      {/* Top right graphics quality (placeholder) */}
-      <div className="absolute top-4 right-4 hidden md:flex flex-col items-end z-10">
-        <div className="flex items-center space-x-2">
-          <span className="text-xs text-purple-300">Graphics:</span>
-          <span className="text-green-400 font-bold text-sm">High quality</span>
-        </div>
-        <div className="w-10 h-10 mt-1 bg-gradient-to-tr from-green-400 to-purple-500 rounded-full flex items-center justify-center">
-          <span className="text-2xl">S</span>
+      {/* Top right theme toggle and graphics quality */}
+      <div className="absolute top-4 right-4 flex flex-col items-end space-y-2 z-10">
+        <ThemeToggle />
+        <div className="hidden md:flex flex-col items-end">
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-purple-300">Graphics:</span>
+            <span className="text-green-400 font-bold text-sm">High quality</span>
+          </div>
+          <div className="w-10 h-10 mt-1 bg-gradient-to-tr from-green-400 to-purple-500 rounded-full flex items-center justify-center">
+            <span className="text-2xl">S</span>
+          </div>
         </div>
       </div>
 
@@ -91,13 +64,17 @@ export default function Index() {
           >
             Play
           </button>
+          <Link to="/blog">
+            <button className="w-32 py-2 rounded-full bg-gradient-to-b from-purple-400 to-purple-700 text-white text-lg font-bold shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400">
+              Read Blog
+            </button>
+          </Link>
         </div>
       </div> 
 
       {/* Bottom center: privacy/contact */}
       <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-xs text-purple-300 text-center">
-        <p>Total Visitors: {metrics.visitors}</p>
-        <p>Total Time Spent: {Math.floor(metrics.timeSpent / 60)} minutes</p>
+        <p>© 2024 Wire Loop Game. Challenge your precision!</p>
       </div>
     </div>
   );

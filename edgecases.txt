@@ -1,0 +1,208 @@
+# Wire Loop Game - Edge Cases Documentation
+
+## 1. LEVEL LOADING AND DATA CORRUPTION
+### Level Data Issues
+- **Missing level files**: Game tries to load level that doesn't exist (e.g., level 9+)
+- **Corrupted level data**: Level file exists but has malformed JSON/export structure
+- **Empty wire path**: Level loads but wirePath array is empty []
+- **Single point path**: Level has only one wire point, can't create a proper path
+- **Invalid coordinates**: Wire points have NaN, Infinity, or null coordinates
+- **Z-coordinate inconsistency**: Some points have z-values, others don't
+- **Duplicate points**: Multiple identical coordinates causing zero-distance segments
+- **Extreme coordinates**: Points with values beyond screen boundaries causing scaling issues
+
+### Scaling and Projection Issues
+- **Division by zero**: Path width or height is 0 causing scaling to fail
+- **Negative dimensions**: Bounding box calculation results in negative width/height
+- **Scale overflow**: Calculated scale is too large causing points to go off-screen
+- **Precision loss**: Floating point arithmetic causing slight coordinate drift
+- **Screen size edge cases**: Very small or very large screen sizes breaking calculations
+
+## 2. GAME STATE MANAGEMENT
+### State Transitions
+- **Rapid state changes**: User clicks multiple buttons quickly causing race conditions
+- **Invalid state combinations**: gameState='following' but gameStarted=false
+- **Stuck in warning state**: Player gets stuck in warning mode indefinitely
+- **State persistence**: Game state not properly reset between levels
+- **Multiple game instances**: Two Phaser games running simultaneously
+
+### Progress Tracking
+- **Progress index overflow**: progressIndex exceeds smoothPoints array length
+- **Negative progress**: progressIndex becomes negative due to calculation error
+- **Progress jumping**: Player skips large sections of the path undetected
+- **Progress reset fails**: progressIndex not properly reset when restarting level
+- **Completion threshold**: Player reaches end but isn't detected as winning
+
+## 3. INPUT AND COLLISION DETECTION
+### Touch/Mouse Input Issues
+- **Multi-touch interference**: Multiple fingers on screen causing confusion
+- **Phantom touches**: Touch events firing without actual user input
+- **Input lag**: High latency between input and response
+- **Touch outside game area**: Clicks outside canvas affecting game state
+- **Context menu interference**: Right-click menu blocking touch events
+
+### Collision Detection Edge Cases
+- **Tolerance variations**: Different devices having different collision tolerances
+- **Fast movement detection**: Rapid mouse movement skipping over wire sections
+- **Collision at corners**: Sharp turns in wire path causing false collision detection
+- **Start point precision**: Player clicks near but not exactly on start point
+- **Edge detection failure**: Player at exact edge of tolerance zone
+
+### Smoothing and Path Generation
+- **Catmull-Rom spline failures**: Invalid control points causing algorithm to break
+- **Insufficient smoothing**: Too few smooth points causing jerky collision detection
+- **Excessive smoothing**: Too many points causing performance issues
+- **Spline overflow**: Generated points going far outside expected bounds
+- **Segment calculation errors**: Distance-based segmentation producing invalid results
+
+## 4. MOBILE AND ORIENTATION ISSUES
+### Device Rotation
+- **Orientation detection delay**: State changes before dimensions update
+- **Landscape/portrait false detection**: Brief incorrect orientation readings
+- **Rotation during gameplay**: User rotates device while actively playing
+- **Orientation lock conflicts**: Browser/device orientation lock interfering
+- **Mixed orientation states**: Different components thinking device is in different orientations
+
+### Mobile-Specific Input
+- **Touch precision variance**: Different finger sizes affecting accuracy
+- **Touch delay/acceleration**: Hardware-specific touch response differences
+- **Screen reader interference**: Accessibility tools interfering with touch events
+- **Soft keyboard appearance**: Virtual keyboard changing screen dimensions
+- **Pinch-zoom interference**: Accidental zoom gestures during gameplay
+
+### Fullscreen Issues
+- **Fullscreen permission denied**: Browser blocking fullscreen requests
+- **Fullscreen exit during gameplay**: User exiting fullscreen unexpectedly
+- **Multiple fullscreen requests**: Rapid clicking causing multiple requests
+- **Fullscreen API differences**: Different browsers having different implementations
+- **Fullscreen without user gesture**: Attempting fullscreen without user interaction
+
+## 5. PERFORMANCE AND MEMORY ISSUES
+### Memory Leaks
+- **Event listener accumulation**: Not properly removing event listeners
+- **Phaser game instances**: Multiple game instances not being destroyed
+- **Graphics object buildup**: Graphics not being properly cleared/destroyed
+- **Timeout/interval leaks**: Timers not being cleared on component unmount
+- **Theme context leaks**: Event listeners not cleaned up properly
+
+### Performance Degradation
+- **Frame rate drops**: Complex levels causing performance issues
+- **Memory pressure**: Long gameplay sessions causing memory issues
+- **Battery drain**: Intensive graphics causing rapid battery consumption
+- **Thermal throttling**: Device overheating affecting performance
+- **Background tab performance**: Game continuing to run when tab not active
+
+### Resource Loading
+- **Failed texture generation**: Graphics.generateTexture() failing
+- **Starfield particle overflow**: Too many particles being generated
+- **Level caching issues**: Levels not properly cached between switches
+- **Dynamic import failures**: Module loading failing at runtime
+
+## 6. UI AND VISUAL ISSUES
+### Rendering Problems
+- **Canvas size mismatch**: Canvas dimensions not matching container
+- **Z-index conflicts**: UI elements appearing behind/in front of game
+- **Blur effect failures**: Post-processing pipeline not working on some devices
+- **Graphics corruption**: Visual artifacts appearing during gameplay
+- **HUD overlay issues**: Game HUD not properly positioned over game canvas
+
+### Theme and Styling
+- **Theme switching during gameplay**: Dark/light theme changes mid-game
+- **CSS variable failures**: Theme variables not being applied correctly
+- **Gradient rendering issues**: Complex gradients not rendering on some devices
+- **Animation conflicts**: CSS animations interfering with game animations
+
+### Responsive Design
+- **Container size calculation**: Game container having incorrect dimensions
+- **Viewport meta tag conflicts**: Mobile viewport settings interfering
+- **CSS flexbox/grid issues**: Layout breaking on certain screen sizes
+- **Aspect ratio problems**: Game not maintaining proper aspect ratio
+
+## 7. PROGRESS AND SCORING ISSUES
+### Level Progression
+- **Level unlock logic**: Players accessing levels they shouldn't have unlocked
+- **Current level persistence**: Level number not saving/loading correctly
+- **Level completion detection**: False positives for level completion
+- **Progress validation**: Invalid progress states being accepted
+- **Backwards progression**: Level number decreasing unexpectedly
+
+### Statistics Tracking
+- **Time calculation errors**: Negative or extremely large time values
+- **Collision counting issues**: Collision counter not incrementing correctly
+- **Score calculation overflow**: Score values becoming too large
+- **Statistics persistence**: Game stats not being saved between sessions
+- **Leaderboard corruption**: Invalid scores being submitted
+
+## 8. NETWORK AND STORAGE ISSUES
+### Local Storage
+- **Storage quota exceeded**: localStorage becoming full
+- **Storage permission denied**: Browser blocking localStorage access
+- **Data corruption**: Stored data becoming corrupted
+- **Concurrent access**: Multiple tabs modifying same storage data
+- **Storage unavailable**: Private/incognito mode blocking storage
+
+### Browser Compatibility
+- **API availability**: Browser APIs not available (fullscreen, orientation, etc.)
+- **ES6 module support**: Dynamic imports not working in older browsers
+- **WebGL compatibility**: Phaser WebGL renderer failing on some devices
+- **Touch event support**: Touch events not properly supported
+- **CSS feature support**: Modern CSS features not available
+
+## 9. TIMING AND RACE CONDITIONS
+### Asynchronous Operations
+- **Component unmount races**: Component unmounting while async operations pending
+- **Event emission timing**: Events being emitted before listeners are attached
+- **Animation frame timing**: requestAnimationFrame conflicts
+- **Timeout overlaps**: Multiple timeouts running simultaneously
+- **Promise rejection handling**: Unhandled promise rejections
+
+### State Update Conflicts
+- **React state batching**: State updates being batched incorrectly
+- **Phaser vs React sync**: Phaser game state out of sync with React state
+- **Event propagation issues**: Events being handled multiple times
+- **Cleanup timing**: Resources being cleaned up too early or too late
+
+## 10. SPECIFIC ALGORITHM EDGE CASES
+### Catmull-Rom Spline
+- **Insufficient control points**: Less than 4 points for spline calculation
+- **Collinear points**: Three or more points in a straight line
+- **Extreme curvature**: Sharp angles causing spline to overshoot
+- **Numerical instability**: Floating point precision affecting spline quality
+
+### Distance Calculations
+- **Zero distance segments**: Two identical points causing division by zero
+- **Floating point precision**: Small rounding errors accumulating
+- **Overflow in distance calculations**: Very large coordinates causing overflow
+- **Negative distances**: Calculation errors resulting in negative values
+
+### Progress Validation
+- **Search radius edge cases**: Player exactly at search radius boundary
+- **Index boundary conditions**: Progress index at array start/end
+- **Sequential validation failures**: Valid progression not being detected
+- **Grace period edge cases**: Player releasing exactly at grace period end
+
+## 11. USER INTERACTION EDGE CASES
+### Input Timing
+- **Double-click interference**: Rapid clicks causing unexpected behavior
+- **Long press detection**: Touch held too long causing context menu
+- **Gesture conflicts**: Swipe gestures interfering with game controls
+- **Input queue overflow**: Too many input events queued up
+
+### Accessibility
+- **Screen reader conflicts**: Accessibility tools interfering with game
+- **High contrast mode**: Theme not working with system accessibility settings
+- **Keyboard navigation**: Game not properly handling keyboard-only navigation
+- **Focus management**: Focus getting trapped or lost inappropriately
+
+## 12. EXTERNAL FACTOR EDGE CASES
+### System Resources
+- **Low memory warnings**: System running out of memory
+- **CPU throttling**: System reducing CPU due to thermal/battery constraints
+- **GPU switching**: Laptop switching between integrated/discrete graphics
+- **Power saving mode**: Device entering low power mode affecting performance
+
+### Browser Environment
+- **Tab visibility changes**: Game behavior when tab becomes inactive
+- **Window focus events**: Game not pausing/resuming correctly
+- **DevTools interference**: Developer tools affecting game performance
+- **Extension conflicts**: Browser extensions interfering with game functionality
