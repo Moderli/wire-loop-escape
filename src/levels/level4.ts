@@ -48,19 +48,19 @@ export const level4: LevelData = createLevelWithDefaults(
   {
     rules: {
       collisionTolerance: {
-        base: 35,
-        mobile: 45,
+        base: 40,
+        mobile: 52,
         levelMultiplier: 1.0
       },
       timing: {
-        gracePeriod: 300,
-        warningDuration: 300,
+        gracePeriod: 380,
+        warningDuration: 380,
         releaseGracePeriod: 75
       },
       movement: {
-        maxProgressJump: 20,
+        maxProgressJump: 24,
         maxBacktrack: 15,
-        lookAheadDistance: 50
+        lookAheadDistance: 55
       },
       performance: {
         smoothingSegments: 200,

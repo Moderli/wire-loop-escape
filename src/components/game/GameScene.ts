@@ -216,6 +216,7 @@ export class GameScene extends Phaser.Scene {
   private warningStartTime: number = 0;
   private lastValidTime: number = 0; // Track when player was last on valid path
   private lastCollisionCheck: number = 0; // Track last collision check time for performance
+  private lastFailureReason: string = '';
 
   constructor() {
     super({ key: 'GameScene' });
@@ -1459,17 +1460,16 @@ export class GameScene extends Phaser.Scene {
   }
   */
 
-  private triggerLoss() {
+  private triggerLoss(reason?: string) {
     // this.sound.play('loss', { volume: 0.4 });
-    
     // Add some debugging to understand why loss was triggered
-    console.log('Loss triggered. Game state:', this.gameState, 'Time since start:', this.time.now - this.followStartTime);
-    
+    console.log('Loss triggered. Game state:', this.gameState, 'Time since start:', this.time.now - this.followStartTime, 'Reason:', reason);
     if (!this.changeGameState('failed')) {
       console.error('Failed to change state to failed');
       return;
     }
-    
+    // Save the reason for display
+    this.lastFailureReason = reason || 'You left the trail or skipped!';
     // Random motivational messages for when the player loses
     const motivationalMessages = [
       "Take a deep breath",
@@ -1483,11 +1483,9 @@ export class GameScene extends Phaser.Scene {
       "You've got this!",
       "Almost there, keep trying"
     ];
-    
     const randomMessage = motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)];
-    
-    // Emit the loss event to the React component instead of showing internal retry screen
-    this.game.events.emit('gameLoss', randomMessage);
+    // Emit the loss event to the React component, now with reason
+    this.game.events.emit('gameLoss', randomMessage, this.lastFailureReason);
   }
 
   private triggerWin() {
@@ -1604,7 +1602,9 @@ export class GameScene extends Phaser.Scene {
       }
       // Strict: If off track or skipping, do not update progress or allow win
       if (isOffTrack || isSkipping || !isValidProgression) {
-        // Only trigger warning if player has been off-track for a significant period
+        // Show the red warning overlay immediately
+        this.showWarningOverlay();
+        // Only trigger warning/loss if player has been off-track for a significant period
         const currentTime = this.time.now;
         if (this.lastValidTime === 0) {
           this.lastValidTime = currentTime;
@@ -1619,8 +1619,9 @@ export class GameScene extends Phaser.Scene {
         }
         return;
       } else {
-        // Player is on track, reset the valid time tracker
+        // Player is on track, reset the valid time tracker and hide the warning overlay
         this.lastValidTime = 0;
+        this.hideWarningOverlay();
       }
       if (this.followStartTime === 0) {
         this.followStartTime = this.time.now;

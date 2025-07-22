@@ -16,78 +16,85 @@ const spiralPoints = [
 
 export const level1: LevelData = createLevelWithDefaults(
   {
-    id: 1,
-    name: 'Simple Spiral',
-    description: 'A gentle introduction to the wire loop game with a simple spiral pattern.',
-    difficulty: 'medium',
-    wirePath: spiralPoints
+    id: 1, // Unique identifier for this level
+    name: 'Simple Spiral', // Level name shown in UI
+    description: 'A gentle introduction to the wire loop game with a simple spiral pattern.', // Description for menus
+    difficulty: 'medium', // Difficulty setting (affects some defaults)
+    wirePath: spiralPoints // The array of 3D points defining the wire path
   },
   {
     rules: {
       collisionTolerance: {
-        base: 35,
-        mobile: 45,
-        levelMultiplier: 1.0
+        base: 50,      // Base collision tolerance in pixels (desktop)
+        mobile: 65,    // Extra tolerance for mobile devices (touch is less precise)
+        levelMultiplier: 1.0 // Multiplier for overall tolerance (1.0 = normal, <1 = harder, >1 = easier)
       },
       timing: {
-        gracePeriod: 300,
-        warningDuration: 300,
-        releaseGracePeriod: 75
+        gracePeriod: 600,         // ms allowed after leaving wire before warning
+        warningDuration: 500,     // ms warning is shown before failure
+        releaseGracePeriod: 75    // ms allowed to re-enter wire after release
       },
       movement: {
-        maxProgressJump: 20,
-        maxBacktrack: 15,
-        lookAheadDistance: 50
+        maxProgressJump: 30,      // Max allowed jump in progress (prevents skipping)
+        maxBacktrack: 20,         // Max allowed backtracking (prevents cheating)
+        lookAheadDistance: 70     // How far ahead to check for collisions
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
       }
     },
     
     visual: {
-      // Friendly green theme for first level
+      // Visual settings for the level
       wire: {
         colors: {
-          active: 0x44ff44,     // Bright green for active following
-          completed: 0x88ff88   // Light green for completed sections
+          active: 0x44ff44,     // Bright green for the wire when player is following correctly
+          completed: 0x88ff88   // Lighter green for sections already completed
         },
         effects: {
-          glowIntensity: 0.25   // Extra glow to make it more visible
+          glowIntensity: 0.25   // Extra glow effect to make the wire more visible
         }
       },
       
       points: {
         start: {
-          size: 18,             // Larger start point for beginners
-          glowColor: 0x88ff88   // Green glow to match theme
+          size: 18,             // Larger start point to make it obvious for beginners
+          glowColor: 0x88ff88   // Green glow to match the wire theme
         }
+        // You can add end/goal point styling here if needed
       },
       
       ui: {
         warningStyle: {
-          backgroundColor: 0xff6600, // Orange warning (less harsh than red)
-          fontSize: 42          // Slightly smaller warning text
+          backgroundColor: 0xff6600, // Orange background for warnings (less harsh than red)
+          fontSize: 42               // Slightly smaller warning text for this level
         }
       }
     },
     
     audio: {
       haptics: {
-        enableVibration: false  // No vibration on first level to avoid startling
+        enableVibration: false  // No vibration on first level to avoid startling new players
       }
+      // You can add sound effect settings here if needed
     },
     
     mobile: {
       scaling: {
-        levelScale: 1.4,        // Even larger on mobile for first level
-        touchTolerance: 15      // Extra touch tolerance
+        levelScale: 1.4,        // Makes the level larger on mobile for easier touch control
+        touchTolerance: 15      // Extra touch tolerance for mobile users
       }
     },
     
     metadata: {
-      author: 'Wire Loop Team',
-      version: '1.0',
-      tags: ['beginner', 'tutorial', 'spiral'],
-      estimatedTime: 30,      // 30 seconds estimated completion
+      author: 'Wire Loop Team', // Who created the level
+      version: '1.0',           // Level version for tracking
+      tags: ['beginner', 'tutorial', 'spiral'], // Tags for filtering/searching levels
+      estimatedTime: 30,        // Estimated time to complete (seconds)
       unlockRequirements: {
-        // No requirements - this is the first level
+        // No requirements - this is the first level and always unlocked
       }
     }
   }

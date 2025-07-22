@@ -49,6 +49,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [motivationalMessage, setMotivationalMessage] = useState('');
+  const [failureReason, setFailureReason] = useState('');
   const [allowPortraitMode, setAllowPortraitMode] = useState(false);
   const [mobileOptimizations, setMobileOptimizations] = useState(mobileManager.optimizeForPerformance());
 
@@ -263,8 +264,9 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
       setGameState('gameOver');
     });
 
-    game.events.on('gameLoss', (message: string) => {
+    game.events.on('gameLoss', (message: string, reason?: string) => {
       setMotivationalMessage(message);
+      setFailureReason(reason || '');
       setGameState('gameOver'); // We'll use gameOver state for both win and loss
     });
 
@@ -403,6 +405,9 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
               <>
                 <h2 className="text-3xl md:text-4xl font-bold text-red-400">You Lost!</h2>
                 <p className="text-xl md:text-2xl text-yellow-300 font-medium">{motivationalMessage}</p>
+                {failureReason && (
+                  <p className="text-base md:text-lg text-red-300 font-semibold mt-2">Reason: {failureReason}</p>
+                )}
                 <div className="space-y-2 text-base md:text-lg">
                   <p>Time: {gameStats.time.toFixed(1)}s</p>
                   <p>Level: {gameStats.level}</p>
@@ -460,7 +465,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
                     </Button>
                   )}
                   <Button 
-                    onClick={() => setCurrentLevel(currentLevel)}
+                    onClick={resetLevel}
                     variant="outline"
                     className="w-full md:w-auto px-6 py-3"
                     size="lg"
