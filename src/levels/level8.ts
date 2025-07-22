@@ -1,4 +1,5 @@
 import { LevelData } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults';
 
 // A refined path to create a clearer elephant silhouette with separate start and end points
 const elephantPoints = [
@@ -36,9 +37,35 @@ const elephantPoints = [
   { x: -120, y: 10, z: 10 },
 ];
 
-export const level8: LevelData = {
-  id: 8,
-  name: 'Elephant Path',
-  difficulty: 'hard',
-  wirePath: elephantPoints,
-};
+export const level8: LevelData = createLevelWithDefaults(
+  {
+    id: 8,
+    name: 'Elephant Path',
+    difficulty: 'hard',
+    wirePath: elephantPoints
+  },
+  {
+    rules: {
+      collisionTolerance: {
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
+      },
+      timing: {
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
+      }
+    }
+  }
+);

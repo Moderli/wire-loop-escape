@@ -1,4 +1,5 @@
 import { LevelData } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults';
 
 // Simplified vortex with much fewer segments for optimal performance
 const vortexPoints = [];
@@ -20,9 +21,35 @@ for (let i = 0; i <= segments; i++) {
   });
 }
 
-export const level6: LevelData = {
-  id: 6,
-  name: 'Zigzag Vortex',
-  difficulty: 'expert',
-  wirePath: vortexPoints,
-}; 
+export const level6: LevelData = createLevelWithDefaults(
+  {
+    id: 6,
+    name: 'Zigzag Vortex',
+    difficulty: 'medium',
+    wirePath: vortexPoints
+  },
+  {
+    rules: {
+      collisionTolerance: {
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
+      },
+      timing: {
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
+      }
+    }
+  }
+); 

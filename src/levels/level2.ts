@@ -1,4 +1,5 @@
 import { LevelData } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults';
 
 // More complex 3D spiral data
 const spiralPoints = [
@@ -13,9 +14,35 @@ const spiralPoints = [
   { x: 120, y: -80, z: 60 }
 ];
 
-export const level2: LevelData = {
-  id: 2,
-  name: 'Twisted Path',
-  difficulty: 'medium',
-  wirePath: spiralPoints,
-}; 
+export const level2: LevelData = createLevelWithDefaults(
+  {
+    id: 2,
+    name: 'Twisted Path',
+    difficulty: 'medium',
+    wirePath: spiralPoints
+  },
+  {
+    rules: {
+      collisionTolerance: {
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
+      },
+      timing: {
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
+      }
+    }
+  }
+); 

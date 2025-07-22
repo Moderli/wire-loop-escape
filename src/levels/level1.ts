@@ -19,19 +19,25 @@ export const level1: LevelData = createLevelWithDefaults(
     id: 1,
     name: 'Simple Spiral',
     description: 'A gentle introduction to the wire loop game with a simple spiral pattern.',
-    difficulty: 'easy',
+    difficulty: 'medium',
     wirePath: spiralPoints
   },
   {
-    // Custom settings for this level (overrides defaults)
     rules: {
-      // Extra forgiving for first level
       collisionTolerance: {
-        levelMultiplier: 1.5  // 50% more tolerance than normal easy level
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
       },
       timing: {
-        gracePeriod: 800,     // Extra long grace period for beginners
-        warningDuration: 4000 // Show warning for 4 seconds
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
       }
     },
     

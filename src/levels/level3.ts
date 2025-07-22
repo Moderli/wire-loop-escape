@@ -1,4 +1,5 @@
 import { LevelData } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults';
 
 // Most complex 3D spiral data
 const spiralPoints = [
@@ -18,9 +19,35 @@ const spiralPoints = [
   { x: -40, y: -50, z: -20 }
 ];
 
-export const level3: LevelData = {
-  id: 3,
-  name: 'Expert Corkscrew',
-  difficulty: 'hard',
-  wirePath: spiralPoints,
-};
+export const level3: LevelData = createLevelWithDefaults(
+  {
+    id: 3,
+    name: 'Expert Corkscrew',
+    difficulty: 'medium',
+    wirePath: spiralPoints
+  },
+  {
+    rules: {
+      collisionTolerance: {
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
+      },
+      timing: {
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
+      }
+    }
+  }
+);

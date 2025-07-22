@@ -447,9 +447,12 @@ export class GameScene extends Phaser.Scene {
     let minDist = Infinity;
     let closestPoint = 0;
     
-    // Dynamic search radius based on level complexity and performance
-    const baseRadius = this.gameStats.level >= 6 ? 15 : 50;
-    const searchRadius = Math.max(10, Math.min(baseRadius, smoothPoints.length / 4));
+    // Use per-level search radius if available, otherwise default to 50
+    let searchRadius = 50;
+    if (this.currentLevelData && this.currentLevelData.rules && this.currentLevelData.rules.movement && typeof this.currentLevelData.rules.movement.lookAheadDistance === 'number') {
+      searchRadius = this.currentLevelData.rules.movement.lookAheadDistance;
+    }
+    searchRadius = Math.max(10, Math.min(searchRadius, Math.floor(smoothPoints.length / 4)));
     
     const startIndex = Math.max(0, this.progressIndex - searchRadius);
     const endIndex = Math.min(smoothPoints.length - 1, this.progressIndex + searchRadius);
@@ -474,21 +477,24 @@ export class GameScene extends Phaser.Scene {
   }
 
   private calculateDynamicTolerance(): number {
+    // Use per-level collision tolerance if available
     const isMobile = window.innerWidth < 768;
-    const baseTolerance = isMobile ? 45 : 35; // Increased base mobile tolerance
-    
-    // Level-based adjustments
+    let baseTolerance = isMobile ? 45 : 35;
     let levelMultiplier = 1.0;
-    if (this.gameStats.level >= 7) levelMultiplier = 2.0; // Very complex levels
-    else if (this.gameStats.level >= 5) levelMultiplier = 1.7; // Complex levels
-    else if (this.gameStats.level >= 3) levelMultiplier = 1.3; // Medium levels
-    
+    if (this.currentLevelData && this.currentLevelData.rules && this.currentLevelData.rules.collisionTolerance) {
+      const tol = this.currentLevelData.rules.collisionTolerance;
+      if (typeof tol.base === 'number') baseTolerance = isMobile && typeof tol.mobile === 'number' ? tol.mobile : tol.base;
+      if (typeof tol.levelMultiplier === 'number') levelMultiplier = tol.levelMultiplier;
+    } else {
+      // Fallback to old logic
+      if (this.gameStats.level >= 7) levelMultiplier = 2.0;
+      else if (this.gameStats.level >= 5) levelMultiplier = 1.7;
+      else if (this.gameStats.level >= 3) levelMultiplier = 1.3;
+    }
     // Device performance adjustments
     const performanceMultiplier = this.getPerformanceMultiplier();
-    
     // Input method adjustments
-    const inputMultiplier = isMobile ? 1.2 : 1.0; // Extra tolerance for touch
-    
+    const inputMultiplier = isMobile ? 1.2 : 1.0;
     return baseTolerance * levelMultiplier * performanceMultiplier * inputMultiplier;
   }
 
@@ -1596,36 +1602,36 @@ export class GameScene extends Phaser.Scene {
         // this.triggerLoss();
         // return;
       }
-      
+      // Strict: If off track or skipping, do not update progress or allow win
       if (isOffTrack || isSkipping || !isValidProgression) {
         // Only trigger warning if player has been off-track for a significant period
         const currentTime = this.time.now;
         if (this.lastValidTime === 0) {
           this.lastValidTime = currentTime;
         }
-        
-        // Much longer grace period for complex levels
-        const gracePeriod = this.gameStats.level >= 4 ? 500 : 300;
+        // Use the per-level grace period if available
+        let gracePeriod = 300;
+        if (this.currentLevelData && this.currentLevelData.rules && this.currentLevelData.rules.timing && typeof this.currentLevelData.rules.timing.gracePeriod === 'number') {
+          gracePeriod = this.currentLevelData.rules.timing.gracePeriod;
+        }
         if (currentTime - this.lastValidTime > gracePeriod) {
-          this.changeGameState('warning');
+          this.triggerLoss();
         }
         return;
       } else {
         // Player is on track, reset the valid time tracker
         this.lastValidTime = 0;
       }
-
       if (this.followStartTime === 0) {
         this.followStartTime = this.time.now;
       }
-
-      // Only update progress if moving forward and following valid progression
-      if (closestPoint > this.progressIndex && !isSkipping && isValidProgression) {
+      // Only update progress if moving forward and following valid progression, and not off track or skipping
+      if (closestPoint > this.progressIndex && !isOffTrack && !isSkipping && isValidProgression) {
         this.progressIndex = closestPoint;
         this.drawWirePath();
       }
-
-      if (this.progressIndex >= smoothPoints.length - 1) {
+      // Only allow win if not off track or skipping
+      if (!isOffTrack && !isSkipping && this.progressIndex >= smoothPoints.length - 1) {
         this.triggerWin();
       }
     }

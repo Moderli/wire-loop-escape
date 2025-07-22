@@ -1,4 +1,5 @@
 import { LevelData } from '@/lib/types';
+import { createLevelWithDefaults } from '@/lib/levelDefaults';
 
 // Level 7: "Mountain Serpent" - A winding path that climbs and descends like a mountain trail
 // No overlaps, but challenging elevation changes and tight curves
@@ -62,9 +63,35 @@ const mountainSerpentPoints = [
   { x: 75, y: 65, z: -20 },
 ];
 
-export const level7: LevelData = {
-  id: 7,
-  name: 'Mountain Serpent',
-  difficulty: 'hard',
-  wirePath: mountainSerpentPoints,
-};
+export const level7: LevelData = createLevelWithDefaults(
+  {
+    id: 7,
+    name: 'Mountain Serpent',
+    difficulty: 'hard',
+    wirePath: mountainSerpentPoints
+  },
+  {
+    rules: {
+      collisionTolerance: {
+        base: 35,
+        mobile: 45,
+        levelMultiplier: 1.0
+      },
+      timing: {
+        gracePeriod: 300,
+        warningDuration: 300,
+        releaseGracePeriod: 75
+      },
+      movement: {
+        maxProgressJump: 20,
+        maxBacktrack: 15,
+        lookAheadDistance: 50
+      },
+      performance: {
+        smoothingSegments: 200,
+        collisionCheckInterval: 16,
+        maxRenderDistance: 2000
+      }
+    }
+  }
+);
