@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { RotateCcw, Home, Settings } from 'lucide-react';
 import { LevelData } from '@/lib/types';
 import { mobileManager } from '@/utils/mobileUtils';
+import Leaderboard from './Leaderboard';
 
 // Dynamically import all levels to get their data
 const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
@@ -27,13 +28,13 @@ interface GameStats {
   score: number;
 }
 
-interface WireLoopGameProps {
+interface GameProps {
   nickname: string;
   currentLevel: number;
   setCurrentLevel: (level: number) => void;
 }
 
-export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLoopGameProps) => {
+export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: GameProps) => {
   const navigate = useNavigate();
   const gameRef = useRef<HTMLDivElement>(null);
   const phaserGameRef = useRef<Phaser.Game | null>(null);
@@ -52,6 +53,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   const [failureReason, setFailureReason] = useState('');
   const [allowPortraitMode, setAllowPortraitMode] = useState(false);
   const [mobileOptimizations, setMobileOptimizations] = useState(mobileManager.optimizeForPerformance());
+  const [failures, setFailures] = useState(0); // Track failures
 
   useEffect(() => {
     // Initialize mobile optimizations
@@ -244,7 +246,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
     phaserGameRef.current = game;
 
     // Pass initial data to the scene
-    game.scene.start('GameScene', { nickname: nickname, level: currentLevel });
+    game.scene.start('GameScene', { playerName: nickname, level: currentLevel, failures: failures });
 
     // Listen for game events
     game.events.on('gameStateChange', (state: string) => {
@@ -262,12 +264,14 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
 
     game.events.on('levelComplete', () => {
       setGameState('gameOver');
+      setFailures(0); // Reset failures on win
     });
 
     game.events.on('gameLoss', (message: string, reason?: string) => {
       setMotivationalMessage(message);
       setFailureReason(reason || '');
       setGameState('gameOver'); // We'll use gameOver state for both win and loss
+      setFailures(prev => prev + 1); // Increment failures on loss
     });
 
     return () => {
@@ -304,11 +308,12 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
         (window as any).gc();
       }
     };
-  }, [currentLevel, isMobile, isLandscape]);
+  }, [currentLevel, nickname, isMobile, isLandscape]);
 
   const startGame = (level: number) => {
     setCurrentLevel(level);
     setGameState('playing');
+    setFailures(0); // Reset failures when starting a new level
     setMotivationalMessage(''); // Clear any motivational message when starting a new game
     if (phaserGameRef.current) {
       phaserGameRef.current.events.emit('startLevel', level);
@@ -318,7 +323,10 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
   const resetLevel = () => {
     setMotivationalMessage(''); // Clear motivational message when resetting
     setGameState('playing'); // Reset to playing state
-    startGame(currentLevel);
+    // When retrying, we preserve the failure count
+    if (phaserGameRef.current) {
+      phaserGameRef.current.scene.start('GameScene', { playerName: nickname, level: currentLevel, failures: failures });
+    }
   };
 
   const goToMenu = () => {
@@ -348,6 +356,13 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
 
   return (
     <div className="relative w-full h-screen bg-game-background overflow-hidden">
+      {/* HUD */}
+      <div className="absolute top-4 left-4 text-white font-bold text-lg bg-black/50 px-4 py-2 rounded-lg">
+        <p>Level: {currentLevel}</p>
+        <p>Player: {nickname}</p>
+        <p>Failures: {failures}</p>
+      </div>
+      
       {/* Collision Flash Overlay */}
       {showCollisionFlash && (
         <div className="absolute inset-0 bg-collision animate-collision-flash pointer-events-none z-50" />
@@ -399,7 +414,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
 
       {/* Game Over Screen */}
       {gameState === 'gameOver' && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/90 backdrop-blur-sm z-50">
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 backdrop-blur-sm z-50">
           <div className="text-center space-y-6 p-8 max-w-md mx-auto">
             {motivationalMessage ? (
               <>
@@ -481,6 +496,7 @@ export const WireLoopGame = ({ nickname, currentLevel, setCurrentLevel }: WireLo
                     Menu
                   </Button>
                 </div>
+                <Leaderboard level={currentLevel} currentUser={nickname} />
               </>
             )}
           </div>

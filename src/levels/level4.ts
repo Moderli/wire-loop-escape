@@ -12,30 +12,6 @@ const helixPoints = [
   { x: -100, y: 30, z: -20 },
   { x: -90, y: 15, z: -10 },
   { x: -80, y: 0, z: 0 },
-  { x: -70, y: -15, z: 10 },
-  { x: -60, y: -30, z: 20 },
-  { x: -50, y: -45, z: 10 },
-  { x: -40, y: -60, z: 0 },
-  { x: -30, y: -45, z: -10 },
-  { x: -20, y: -30, z: -20 },
-  { x: -10, y: -15, z: -10 },
-  { x: 0, y: 0, z: 0 },
-  { x: 10, y: 15, z: 10 },
-  { x: 20, y: 30, z: 20 },
-  { x: 30, y: 45, z: 10 },
-  { x: 40, y: 60, z: 0 },
-  { x: 50, y: 45, z: -10 },
-  { x: 60, y: 30, z: -20 },
-  { x: 70, y: 15, z: -10 },
-  { x: 80, y: 0, z: 0 },
-  { x: 90, y: -15, z: 10 },
-  { x: 100, y: -30, z: 20 },
-  { x: 110, y: -45, z: 10 },
-  { x: 120, y: -60, z: 0 },
-  { x: 130, y: -45, z: -10 },
-  { x: 140, y: -30, z: -20 },
-  { x: 150, y: -15, z: -10 },
-  { x: 160, y: 0, z: 0 },
 ];
 
 export const level4: LevelData = createLevelWithDefaults(
@@ -49,24 +25,17 @@ export const level4: LevelData = createLevelWithDefaults(
     rules: {
       collisionTolerance: {
         base: 60,
-        mobile: 52,
-        levelMultiplier: 1.0
+        mobile: 52
       },
       timing: {
-        gracePeriod: 600,
-        warningDuration: 380,
-        releaseGracePeriod: 75
+        gracePeriod: 600
       },
       movement: {
-        maxProgressJump: 24,
-        maxBacktrack: 15,
-        lookAheadDistance: 55
+        maxProgressJump: 50
       },
       performance: {
-        smoothingSegments: 200,
-        collisionCheckInterval: 16,
-        maxRenderDistance: 2000
+        smoothingSegments: 100
       }
     }
   }
-); 
+);

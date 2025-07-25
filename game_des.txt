@@ -1,0 +1,43 @@
+Wire Loop Escape is a fast-paced, precision-based puzzle and reflex game where players must guide a virtual loop along intricate wire paths without touching the edges. Inspired by the classic steady-hand wire loop games, this digital version brings a modern twist with vibrant visuals, dynamic effects, and a variety of challenging levels.
+
+---
+
+**Gameplay:**
+- Players control a glowing loop (cursor or touch) and must follow a winding wire path from start to finish.
+- The goal is to stay as close to the center of the wire as possible without "deboarding" (leaving the trail) or skipping ahead.
+- If the player leaves the path, a red warning overlay appears. Staying off the path for more than a short grace period results in failure.
+- Each level features unique shapes, from spirals and helixes to animals and cosmic patterns, increasing in complexity and requiring steady hands and sharp reflexes.
+
+**Features:**
+- 11 handcrafted levels, each with a unique path and visual theme (spiral, double helix, elephant, butterfly, cosmic circuit, and more).
+- Difficulty progression from beginner-friendly to expert-level challenges.
+- Special visual effects: glowing wires, gold and cosmic trails, pulsing indicators, and animated backgrounds.
+- Responsive controls for both mouse and touch devices.
+- Instant feedback: red warning overlay, motivational messages, and retry/next level options.
+- Mobile-optimized UI and scaling for a seamless experience on all devices.
+- Sitelock and anti-piracy features for secure web deployment.
+- Fast loading and smooth performance, even on low-end devices.
+
+**Controls:**
+- Desktop: Move the mouse to guide the loop along the wire.
+- Mobile: Touch and drag to follow the path.
+- No keyboard required; intuitive, one-finger/tap play.
+
+**Visual Style:**
+- Neon and gold color palettes, glowing effects, and animated starfields.
+- Each level has a distinct look, from friendly spirals to cosmic nebulae.
+- Clean, readable UI with clear start/end points and progress indicators.
+
+**Unique Selling Points:**
+- Classic wire loop gameplay reimagined for the digital age.
+- Visually stunning, with dynamic effects and unique level art.
+- Fair but challenging: strict rules, but adjustable difficulty for early levels.
+- Quick restarts and instant feedback keep players engaged.
+- Suitable for all ages; PEGI 12 compliant.
+
+**Perfect for:**
+- Fans of reflex, puzzle, and steady-hand games.
+- Players looking for a quick, challenging, and visually engaging experience.
+- Both casual and competitive gamers seeking to master every level.
+
+Can you escape the wire loop? Test your precision and nerves in Wire Loop Escape!

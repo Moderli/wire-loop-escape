@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { LevelData, WirePoint } from '@/lib/types';
 import { createLevelWithDefaults } from '@/lib/levelDefaults'; // at the top if not already imported
+import { logLevelCompletion } from '@/lib/logLevelCompletion';
 
 // Dynamically import all levels from the levels folder
 const levelModules = import.meta.glob('/src/levels/level*.ts', { eager: true });
@@ -170,6 +171,7 @@ export class GameScene extends Phaser.Scene {
   private smoothPoints: Phaser.Math.Vector2[] = [];
   private startTime: number = 0;
   private playerName: string = '';
+  private failures: number = 0;
   private gameStats = {
     time: 0,
     collisions: 0,
@@ -216,7 +218,7 @@ export class GameScene extends Phaser.Scene {
   private warningStartTime: number = 0;
   private lastValidTime: number = 0; // Track when player was last on valid path
   private lastCollisionCheck: number = 0; // Track last collision check time for performance
-  private lastFailureReason: string = '';
+  private lastFailureReason: string | null = null;
 
   constructor() {
     super({ key: 'GameScene' });
@@ -225,6 +227,10 @@ export class GameScene extends Phaser.Scene {
   // State management methods
   private changeGameState(newState: 'preGame' | 'following' | 'warning' | 'completed' | 'failed'): boolean {
     const currentState = this.gameState;
+    if (currentState === newState) {
+      // Already in this state, do nothing
+      return false;
+    }
     
     // Check if transition is valid
     const validTransitions = this.validStateTransitions.get(currentState);
@@ -695,8 +701,9 @@ export class GameScene extends Phaser.Scene {
      this.lastCollisionCheck = currentTime;
    }
 
-  init(data: { playerName: string, level?: number }) {
-    this.playerName = data.playerName;
+  init(data: { playerName: string, level?: number, failures?: number }) {
+    this.playerName = data.playerName || 'Guest';
+    this.failures = data.failures || 0;
     const initialLevel = data.level || 1;
     this.gameStats = {
       time: 0,
@@ -1494,6 +1501,13 @@ export class GameScene extends Phaser.Scene {
       console.error('Failed to change state to completed');
       return;
     }
+    // Log level completion to Firestore
+    logLevelCompletion({
+      playerName: this.playerName,
+      level: this.gameStats.level,
+      timeSpent: this.elapsedFollowTime,
+      failures: this.failures,
+    });
     this.game.events.emit('levelComplete');
     // The UI will now handle the report screen
   }

@@ -4,17 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { SocialButtons, SocialButtonsHorizontal } from '@/components/SocialButtons';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const gradientText =
   'bg-gradient-to-r from-green-400 via-green-300 to-purple-500 bg-clip-text text-transparent';
 
-export default function Index() {
-  const [nickname, setNickname] = useState('');
+interface IndexProps {
+  onStartGame: (nickname: string) => void;
+}
+
+export default function Index({ onStartGame }: IndexProps) {
+  const [nickname, setNickname] = useState("");
+  const [error, setError] = useState(false);
   const navigate = useNavigate();
 
-  const handlePlay = async () => {
+  const handleStart = () => {
     if (nickname.trim()) {
-      navigate('/game', { state: { nickname } });
+      onStartGame(nickname);
+    } else {
+      setError(true);
     }
   };
 
@@ -48,21 +57,21 @@ export default function Index() {
           Play fair, play safe.
         </p>
         <div className="w-full flex flex-col items-center space-y-4 md:space-y-6 mt-4">
-          <input
-            className="w-full max-w-sm px-6 py-3 rounded-full bg-[#3a3350] text-lg text-purple-200 placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-green-400 shadow-lg mb-2"
-            placeholder="Nickname"
-            value={nickname}
-            onChange={e => setNickname(e.target.value)}
-            maxLength={20}
-          />
-          <button
-            className="w-32 py-3 rounded-full bg-gradient-to-b from-green-400 to-green-700 text-white text-xl md:text-2xl font-bold shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-green-400"
-            onClick={handlePlay}
-            disabled={!nickname.trim()}
-            style={{ boxShadow: '0 4px 24px 0 #1a3a2a55' }}
-          >
-            Play
-          </button>
+          <div className="flex w-full max-w-sm items-center space-x-2">
+            <Input
+              type="text"
+              placeholder="Enter your nickname"
+              value={nickname}
+              onChange={(e) => {
+                setNickname(e.target.value);
+                if (error) setError(false);
+              }}
+              onKeyPress={(e) => e.key === 'Enter' && handleStart()}
+              className={error ? 'border-red-500' : ''}
+            />
+            <Button onClick={handleStart} className="glow-primary">Start Game</Button>
+          </div>
+          {error && <p className="text-red-500 text-sm mt-2">Please enter a nickname to start.</p>}
           <Link to="/blog">
             <button className="w-32 py-2 rounded-full bg-gradient-to-b from-purple-400 to-purple-700 text-white text-lg font-bold shadow-lg hover:scale-105 transition-all focus:outline-none focus:ring-2 focus:ring-purple-400">
               Read Blog

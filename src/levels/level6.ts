@@ -36,8 +36,8 @@ export const level6: LevelData = createLevelWithDefaults(
         levelMultiplier: 1.0
       },
       timing: {
-        gracePeriod: 300,
-        warningDuration: 300,
+        gracePeriod: 500,
+        warningDuration: 500,
         releaseGracePeriod: 75
       },
       movement: {
