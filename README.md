@@ -3,8 +3,7 @@
 
 A browser-based simulation of the classic **Wire Loop Game** — test your steadiness and reaction time! Move the cursor through the wire path without touching the edges. Built with HTML, CSS, and JavaScript.
 
-🎮 [Play the Game](https://techmediate.in/wireloopgame)  
-🌐 [Visit Our Site](https://techmediate.in)
+[Visit My game](https://techmediate.in)
 
 ---
 
