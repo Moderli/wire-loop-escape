@@ -34,7 +34,7 @@ A browser-based simulation of the classic **Wire Loop Game** — test your stead
 
 ## 🖼️ Demo
 
-Play now: [https://techmediate.in/wireloopgame](https://techmediate.in/wireloopgame)
+Play now: [https://techmediate.in/wireloopgame](https://techmediate.in/)
 
 ---
 
