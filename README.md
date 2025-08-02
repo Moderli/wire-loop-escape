@@ -1,73 +1,51 @@
-# Welcome to your Lovable project
 
-## Project info
+# 🔌 Wire Loop Game (Web)
 
-**URL**: https://lovable.dev/projects/28a04f40-1ce4-4d1a-a430-0997145c61c0
+A browser-based simulation of the classic **Wire Loop Game** — test your steadiness and reaction time! Move the cursor through the wire path without touching the edges. Built with HTML, CSS, and JavaScript.
 
-## How can I edit this code?
+🎮 [Play the Game](https://techmediate.in/wireloopgame)  
+🌐 [Visit Our Site](https://techmediate.in)
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+![Game Preview](https://techmediate.in/assets/images/wireloop-preview.png) <!-- Replace with your actual preview image -->
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/28a04f40-1ce4-4d1a-a430-0997145c61c0) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🚀 Features
 
-**Use your preferred IDE**
+- ⚡ Interactive mouse-based gameplay
+- 💥 Real-time collision detection
+- 🎯 Precision testing and hand-eye coordination
+- 🔊 Sound effects on collision (optional)
+- 📱 Fully responsive and mobile-friendly
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🧰 Tech Stack
 
-Follow these steps:
+| Tech       | Description                 |
+|------------|-----------------------------|
+| HTML5      | Game structure              |
+| CSS3       | Styling and responsiveness  |
+| JavaScript | Game logic and interaction  |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 🖼️ Demo
 
-# Step 3: Install the necessary dependencies.
-npm i
+Play now: [https://techmediate.in/wireloopgame](https://techmediate.in/wireloopgame)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+---
 
-**Edit a file directly in GitHub**
+## 🛠️ Installation (For Local Use)
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+git clone https://github.com/yourusername/wireloopgame.git
+cd wireloopgame
+open index.html  # or just double-click the file
 
-**Use GitHub Codespaces**
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
 
-## What technologies are used for this project?
+<img width="1852" height="922" alt="image" src="https://github.com/user-attachments/assets/3321b26d-ff5e-4edf-a0ba-02aafd3038e9" />
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/28a04f40-1ce4-4d1a-a430-0997145c61c0) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
