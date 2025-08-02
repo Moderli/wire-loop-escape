@@ -7,10 +7,6 @@ A browser-based simulation of the classic **Wire Loop Game** — test your stead
 
 ---
 
-![Game Preview](https://techmediate.in/assets/images/wireloop-preview.png) <!-- Replace with your actual preview image -->
-
----
-
 ## 🚀 Features
 
 - ⚡ Interactive mouse-based gameplay
@@ -25,9 +21,10 @@ A browser-based simulation of the classic **Wire Loop Game** — test your stead
 
 | Tech       | Description                 |
 |------------|-----------------------------|
-| HTML5      | Game structure              |
-| CSS3       | Styling and responsiveness  |
-| JavaScript | Game logic and interaction  |
+| Tailwind   | Styling and responsiveness  |
+| Next.js    | Game logic and interaction  |
+| Cursor     | For Coding                  |
+| Loveable   | For Full structure          | 
 
 ---
 
